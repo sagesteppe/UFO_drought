@@ -6,6 +6,11 @@ output:
 always_allow_html: true
 ---
 
+Variables required:
+
+Precipitation
+Available Water Content
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F)
 knitr::opts_chunk$set(dpi = 300) 
@@ -14,10 +19,47 @@ knitr::opts_chunk$set(warning = F)
 ```
 
 
+
+# Calculation of SPEI 
 ```{r}
-devtools::install_github("cszang/pdsi")
-# (on Linux)
-library(pdsi)
-pdsi::build_linux_binaries()
+library(SPEI)
+
+data(wichita)
+
+# Potential Evapotransrespiration,
+ # requires the monthly mean temperature, and the latitudinal centroid of the cell
+wichita$PET <- thornthwaite(wichita$TMED, 37.6475) 
+
+# the total monthly precipitation minus the 
+# potential evapotransrespiration is the Water Balance
+wichita$BAL <- wichita$PRCP-wichita$PET 
+
+wichita <- ts(wichita[,-c(1,2)], end=c(2011,10), frequency=12)
+plot(wichita)
+
+# Calculate the SPEI here
+spei3 <- spei(wichita[,'BAL'], scale = 3) # seasonal
+spei12 <- spei(wichita[,'BAL'], scale = 12) # yearly
+
+plot(spei3)
+plot(spei12)
+
+rm(wichita)
+data(wichita)
+
+PET <- thornthwaite(wichita$TMED, 37.6475) 
+
+# the total monthly precipitation minus the 
+# potential evapotransrespiration is the Water Balance
+BAL <- wichita$PRCP-PET 
+
+wichita <- ts(wichita[,-c(1,2)], end=c(2011,10), frequency=12)
+plot(wichita)
+
+# Calculate the SPEI here
+spei1 <- spei(wichita[,'BAL'], scale = 1) # one month
+spei3 <- spei(wichita[,'BAL'], scale = 3) # seasonal
+spei12 <- spei(wichita[,'BAL'], scale = 12) # yearly
+
 ```
 

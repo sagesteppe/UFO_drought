@@ -3,8 +3,7 @@
 There seems to be little consensus on what quantifies ecological drought, i.e. how much drier than normal does it need to be for a locality to be in drought? While we avoid these questions, we do calculate the two most common metrics of drought the Palmer Drought Severity Index (PDSI), and Standardized Precipitation Evapotranspiration Index (SPEI). Some discussion of the advantages of both, largely recapitulated from better sources is also done.
 
 <div align="center">
-PDSI Values Interpretation
-
+       PDSI Values Interpretation
 |      Value      |   Interpretation    |
 | :------------:  | :-----------------: |
 |     > 4.0       |    extremely wet    |
@@ -19,10 +18,7 @@ PDSI Values Interpretation
 |  -3.0 to -3.99  |   severe drought    |
 |     < -4.0      |  extreme drought    |
 
-*this table copied from a presentation by Brian Fuchs of the
-National Drought Mitigation Center and University of Nebraska-Lincoln*
-
-
+         SPI Values Interpretation
 |     Value       |    Interpretation       |
 | :------------:  | :------------------:    |
 |     > -0.5      |      near normal        | 
@@ -32,7 +28,29 @@ National Drought Mitigation Center and University of Nebraska-Lincoln*
 |  -1.6 to -1.9   |    Extreme Drought      |
 |    < -2.0       |  Exceptional Drought    |
 
-*this table copied from a presentation by Brian Fuchs of the
+*these table copied from a presentation by Brian Fuchs of the
 National Drought Mitigation Center and University of Nebraska-Lincoln*
 
 </div>
+
+
+
+Variables required to calculate SPEI (using the SPEI package), via the
+Penman equation
+
+|           Variable            |        Source        |
+| :------------------------:    |  :---------------:   |
+|       precip sum (mm)         |     GridMET  (pr)    |
+|   mean daily max temp (ºC)    |     GridMET (tmmx)   |
+|   mean daily min temp (ºC)    |     GridMET (tmmn)   |
+|       mean temp (ºC.)         |$T_{max} + T_{min} /2$|
+|  mean wind speed (km h-1)     |     GridMET (vs)     |        
+|    mean sun hours (hours)     |                      |
+|   mean cloud cover (percent)  |   Wilson, EarthEnv   |
+|    elevation in meters        |                      |
+
+Note all of these values are monthly
+
+The metrics: 1) $T_{min}$, 2) $T_{max}$, 3) mean sun hours, 4) and elevation will be used
+collectively to calculate evapotranrespiration using the Penman equation. If you cannot
+locate these variables than you can just supply Tmin and Tmax to the Thornthwaite or Hargreaves equation.
