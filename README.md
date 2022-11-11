@@ -3,6 +3,7 @@
 There seems to be little consensus on what quantifies ecological drought, i.e. how much drier than normal does it need to be for a locality to be in drought? While we avoid these questions, we do calculate the two most common metrics of drought the Palmer Drought Severity Index (PDSI), and Standardized Precipitation Evapotranspiration Index (SPEI). Some discussion of the advantages of both, largely recapitulated from better sources is also done.
 
 <div align="center">
+
        PDSI Values Interpretation
 |      Value      |   Interpretation    |
 | :------------:  | :-----------------: |
@@ -35,6 +36,8 @@ National Drought Mitigation Center and University of Nebraska-Lincoln*
 
 
 
+<div align="center">
+
 Variables required to calculate SPEI (using the SPEI package), via the
 Penman equation
 
@@ -48,8 +51,9 @@ Penman equation
 |    mean sun hours (hours)     |                      |
 |   mean cloud cover (percent)  |   Wilson, EarthEnv   |
 |    elevation in meters        |                      |
-
 Note all of these values are monthly
+
+</div>
 
 The metrics: 1) $T_{min}$, 2) $T_{max}$, 3) mean sun hours, 4) and elevation will be used
 collectively to calculate evapotranrespiration using the Penman equation. If you cannot
