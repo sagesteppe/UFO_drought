@@ -18,7 +18,44 @@ knitr::opts_chunk$set(message = F)
 knitr::opts_chunk$set(warning = F)
 ```
 
+```{r}
+library(terra)
+```
 
+
+Create potential solar hours rasters
+
+"Elevation, aspect and slope input values should not be reclassified into coarser categories. This could lead to incorrect results. " - r.sun man pages
+```{bash, eval = F}
+
+grass --tmp-location /hdd/Geospatial_data/sunhours/input/UFO_dem_10_smooth.tif
+pOUT='/hdd/Geospatial_data/sunhours/output'
+
+for i in {1..365}
+do
+  rasterfari=SunHours$i
+  r.sunhours sunhour=$rasterfari year=2000 day=$i --overwrite
+  r.out.gdal input=$rasterfari output=$pOUT/${rasterfari} format=GTiff -c --overwrite
+done
+
+exit
+
+```
+
+
+```{r}
+terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_dem_10_smooth.tif') # nad83
+terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_aspect.tif') # nad83
+terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_slope.tif')
+
+
+d1 <- terra::rast('/hdd/Geospatial_data/sunhours/output/SunHours182')
+options(scipen=999)
+terra::summary(d1)
+
+
+plot(d1)
+```
 
 # Calculation of SPEI 
 ```{r}
