@@ -1,0 +1,23 @@
+---
+title: "Calculating PDSI and SPEI"
+author: "steppe"
+output:
+  word_document: default
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(dpi = 300) 
+knitr::opts_chunk$set(message = F)
+knitr::opts_chunk$set(warning = F)
+```
+
+
+```{r}
+devtools::install_github("cszang/pdsi")
+# (on Linux)
+library(pdsi)
+pdsi::build_linux_binaries()
+```
+
