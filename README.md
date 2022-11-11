@@ -4,7 +4,7 @@ There seems to be little consensus on what quantifies ecological drought, i.e. h
 
 <div align="center">
 
-       PDSI Values Interpretation
+  PDSI Values Interpretation
 |      Value      |   Interpretation    |
 | :------------:  | :-----------------: |
 |     > 4.0       |    extremely wet    |
@@ -19,7 +19,7 @@ There seems to be little consensus on what quantifies ecological drought, i.e. h
 |  -3.0 to -3.99  |   severe drought    |
 |     < -4.0      |  extreme drought    |
 
-         SPI Values Interpretation
+  SPI Values Interpretation
 |     Value       |    Interpretation       |
 | :------------:  | :------------------:    |
 |     > -0.5      |      near normal        | 
@@ -41,17 +41,17 @@ National Drought Mitigation Center and University of Nebraska-Lincoln*
 Variables required to calculate SPEI (using the SPEI package), via the
 Penman equation
 
-|           Variable            |        Source        |
-| :------------------------:    |  :---------------:   |
-|       precip sum (mm)         |     GridMET  (pr)    |
-|   mean daily max temp (ºC)    |     GridMET (tmmx)   |
-|   mean daily min temp (ºC)    |     GridMET (tmmn)   |
-|       mean temp (ºC.)         |$T_{max} + T_{min} /2$|
-|  mean wind speed (km h-1)     |     GridMET (vs)     |        
-|    mean sun hours (hours)     |                      |
-|   mean cloud cover (percent)  |   Wilson, EarthEnv   |
-|    elevation in meters        |                      |
-Note all of these values are monthly
+|           Variable            |         Source         |
+| :------------------------:    |   :---------------:    |
+|       precip sum (mm)         |      GridMET  (pr)     |
+|   mean daily max temp (ºC)    |      GridMET (tmmx)    |
+|   mean daily min temp (ºC)    |      GridMET (tmmn)    |
+|       mean temp (ºC.)         |$(T_{max} + T_{min}) /2$|
+|  mean wind speed (km h-1)     |      GridMET (vs)      |        
+|    mean sun hours (hours)     |         r.sun          |
+|   mean cloud cover (percent)  |    Wilson, EarthEnv    |
+|    elevation in meters        |                        |
+**Note all of these values are over a month**
 
 </div>
 
