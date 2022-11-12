@@ -26,9 +26,22 @@ library(terra)
 Create potential solar hours rasters
 
 "Elevation, aspect and slope input values should not be reclassified into coarser categories. This could lead to incorrect results. " - r.sun man pages
-```{bash, eval = F}
 
-grass --tmp-location /hdd/Geospatial_data/sunhours/input/UFO_dem_10_smooth.tif
+
+```{r Create template raster for sun hours, eval = F}
+
+template <- rast('/hdd/Geospatial_data/sunhours/input/UFO_dem_10_smooth.tif')
+xy <- ext(template)
+
+coarse_template <- rast(nrow = 100, ncol = 100, crs = crs(template),
+     xmin = xy[1], xmax =	 xy[2], ymin 	=  xy[3], ymax =  xy[4], vals = 0
+       )
+writeRaster(coarse_template, '/hdd/Geospatial_data/sunhours/input/coarse.tif')
+```
+
+```{bash calculate sun hours in GRASS GIS, eval = F}
+
+grass --tmp-location /hdd/Geospatial_data/sunhours/input/coarse.tif
 pOUT='/hdd/Geospatial_data/sunhours/output'
 
 for i in {1..365}
@@ -44,17 +57,10 @@ exit
 
 
 ```{r}
-terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_dem_10_smooth.tif') # nad83
-terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_aspect.tif') # nad83
-terra::rast('/hdd/Geospatial_data/sunhours/input/UFO_slope.tif')
 
-
+list.files()
 d1 <- terra::rast('/hdd/Geospatial_data/sunhours/output/SunHours182')
-options(scipen=999)
-terra::summary(d1)
 
-
-plot(d1)
 ```
 
 # Calculation of SPEI 
