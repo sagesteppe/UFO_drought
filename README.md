@@ -51,6 +51,7 @@ Penman equation
 |    mean sun hours (hours)     |         r.sun          |
 |   mean cloud cover (percent)  |    Wilson, EarthEnv    |
 |    elevation in meters        |      EarthEnv 250      |
+  
 **Note all of these values are over a month**
 
 </div>
