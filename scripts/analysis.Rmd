@@ -19,6 +19,7 @@ knitr::opts_chunk$set(warning = F)
 ```
 
 ```{r}
+library(tidyverse)
 library(terra)
 ```
 
@@ -37,8 +38,12 @@ coarse_template <- rast(nrow = 100, ncol = 100, crs = crs(template),
      xmin = xy[1], xmax =	 xy[2], ymin 	=  xy[3], ymax =  xy[4], vals = 0
        )
 writeRaster(coarse_template, '/hdd/Geospatial_data/sunhours/input/coarse.tif')
+
+rm(template, xy, coarse_template)
 ```
 
+
+To calculate Sun hours the r.sun function from GRASS GIS was used to calculate the sun hours for across the field office for the year 2010.
 ```{bash calculate sun hours in GRASS GIS, eval = F}
 
 grass --tmp-location /hdd/Geospatial_data/sunhours/input/coarse.tif
@@ -55,12 +60,32 @@ exit
 
 ```
 
+The means of each month was taken and used as sun values across the entirety of the temporal domain.
+```{r Process Sun Hour Data into Monthly Means, eval =F}
+dmonths <- c(
+  rep('JAN', length(1:31)), rep('FEB', length(32:59)), rep('MAR', length(60:90)),
+  rep('APR', length(91:120)), rep('MAY', length(121:151)), rep('JUN', length(152:181)),
+  rep('JUL', length(182:212)), rep('AUG', length(213:243)), rep('SEPT', length(244:273)),
+  rep('OCT', length(274:304)), rep('NOV', length(305:334)), rep('DEC', length(335:365)) )
+sh_p <- '/hdd/Geospatial_data/sunhours/output'
 
-```{r}
+files <- data.frame(filename = list.files(sh_p)) %>% 
+  mutate(number = as.numeric(str_extract_all(filename,"\\(?[0-9,.]+\\)?")),
+         fpath = file.path(sh_p, filename)) %>% 
+  arrange(number) %>% 
+  bind_cols(., 'Month' =  dmonths)
 
-list.files()
-d1 <- terra::rast('/hdd/Geospatial_data/sunhours/output/SunHours182')
+mean_rasters <- files %>% 
+  split(., .$Month) %>% 
+  lapply(., '[[', c('fpath')) %>% 
+  map(., rast) %>% 
+  map(., mean)
+mean_rasters <- rast(mean_rasters)
 
+writeRaster(mean_rasters, '/hdd/UFO_drought/data/raw/MeanSunHours.tif', overwrite = T)
+file.remove(files$fpath)
+
+rm(pancake, dmonths, sh_p, files, mean_rasters)
 ```
 
 # Calculation of SPEI 
