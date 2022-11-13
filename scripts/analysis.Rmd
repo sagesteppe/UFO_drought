@@ -88,6 +88,7 @@ file.remove(files$fpath)
 rm(pancake, dmonths, sh_p, files, mean_rasters)
 ```
 
+
 ```{r Border}
 border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
 ```
@@ -100,9 +101,20 @@ clouds <- rast(cfiles)
 
 border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(clouds))
 clouds <- crop(clouds, border)
-writeRaster(clouds, '../data/raw/clouds.tif')
 
+clouds
+
+writeRaster(clouds, '../data/raw/clouds.tif', NAflag=NA, overwrite = T)
 rm(cpath, clouds, border, cfiles)
+```
+
+
+```{r subtract clouds from sun hours}
+
+cloud_rasters <- rast('../data/raw/clouds.tif')
+max(cloud_rasters)
+
+range(cloud_rasters)
 ```
 
 ```{r Crop DEM, eval = F}
@@ -127,10 +139,7 @@ Get_Gridmet(product_type = "tmmn", start_year = 1979, end_year = 2021, destinati
 Get_Gridmet(product_type = "vs", start_year = 1979, end_year = 2021, destination = p)
 p <- file.path(p, 'Gridmet')
 
-
-
 # now reduce the size of these data by making the monthly means
-
 root_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/Gridmet'
 out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 crop_p <- '../data/raw/UFO_slope_deg.tif'
