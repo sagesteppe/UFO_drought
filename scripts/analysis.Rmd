@@ -88,6 +88,63 @@ file.remove(files$fpath)
 rm(pancake, dmonths, sh_p, files, mean_rasters)
 ```
 
+```{r Border}
+border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
+```
+
+```{r Crop Cloud data, eval = F}
+
+cpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/cloud'
+cfiles <- file.path(cpath, list.files(cpath, pattern = "tif$"))
+clouds <- rast(cfiles)
+
+border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(clouds))
+clouds <- crop(clouds, border)
+writeRaster(clouds, '../data/raw/clouds.tif')
+
+rm(cpath, clouds, border, cfiles)
+```
+
+```{r Crop DEM, eval = F}
+
+dpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/dem'
+dem <- rast(file.path(dpath, list.files(dpath, pattern = "bil$", recursive = T)))
+
+border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(dem))
+dem <- crop(dem, border)
+writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
+
+rm(dpath, dem)
+```
+
+
+```{r Download climate vars from gridmet and subset, eval = F}
+
+p <- '/media/sagesteppe/ExternalHD/drought_geospatial/Gridmet'
+Get_Gridmet(product_type = "pr", start_year = 1979, end_year = 2021, destination = p)
+Get_Gridmet(product_type = "tmmx", start_year = 1979, end_year = 2021, destination = p)
+Get_Gridmet(product_type = "tmmn", start_year = 1979, end_year = 2021, destination = p)
+Get_Gridmet(product_type = "vs", start_year = 1979, end_year = 2021, destination = p)
+p <- file.path(p, 'Gridmet')
+
+
+
+# now reduce the size of these data by making the monthly means
+
+root_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/Gridmet'
+out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
+crop_p <- '../data/raw/UFO_slope_deg.tif'
+
+gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'vs')
+gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'pr')
+gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmn')
+gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmx')
+
+rm(root_p, out_p, crop_p, gridSTATS)
+```
+
+
+
 # Calculation of SPEI 
 ```{r}
 library(SPEI)
