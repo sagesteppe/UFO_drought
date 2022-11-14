@@ -18,14 +18,6 @@
 #' 
 gridSTATS <- function(inpath, FUN, outpath, cropRast, variable){
   
-  dmonths_normal <- c(
-    rep('JAN', length(1:31)), rep('FEB', length(32:59)), rep('MAR', length(60:90)),
-    rep('APR', length(91:120)), rep('MAY', length(121:151)), rep('JUN', length(152:181)),
-    rep('JUL', length(182:212)), rep('AUG', length(213:243)), rep('SEPT', length(244:273)),
-    rep('OCT', length(274:304)), rep('NOV', length(305:334)), rep('DEC', length(335:365)) 
-    )
-  dmonths_leap <- c(dmonths_normal[1:31], rep('FEB', 29), dmonths_normal[60:365])
-  
   months_normal <- 1:365
   names(months_normal) <- dmonths_normal
   
@@ -101,8 +93,37 @@ gridSTATS <- function(inpath, FUN, outpath, cropRast, variable){
   message(paste0(variable, ' has finished processing and is saved as a stack.'))
 }
 
-dmonths <- c(
+#' global variable, days in a month - non leap year.
+dmonths_normal <- c(
   rep('JAN', length(1:31)), rep('FEB', length(32:59)), rep('MAR', length(60:90)),
   rep('APR', length(91:120)), rep('MAY', length(121:151)), rep('JUN', length(152:181)),
   rep('JUL', length(182:212)), rep('AUG', length(213:243)), rep('SEPT', length(244:273)),
   rep('OCT', length(274:304)), rep('NOV', length(305:334)), rep('DEC', length(335:365)) )
+
+#' global variable, days in a month - leap year.
+dmonths_leap <- c(dmonths_normal[1:31], rep('FEB', 29), dmonths_normal[60:365])
+
+
+#' update the names of rasters quickly
+#' 
+#' Simple function, mostly just to reduce the amounts of lines dedicated to this
+#' process. Is useful if many different variables are being stacked and the only
+#' distinguishing feature for them is the variable name and years. 
+#' 
+#' @param raster a stack for input
+#' @param var optional, a different name for the variable, defaults to the name
+#' of the stack
+#' @param start numeric, start year
+#' @param end numeric, end year
+#' @examples 
+#' 
+#' names(vs)
+#' names(vs) <- namer(vs)
+#' names(vs)
+#' @export
+namer <- function(raster, var, start, end){
+  if(missing(var)){var = deparse(substitute(raster))}
+  if(missing(end)){end = (start -1) + dim(raster)[3]/12}
+  names <- paste(var, names(raster), rep(start:end, each = 12) ,sep = "_")
+}
+

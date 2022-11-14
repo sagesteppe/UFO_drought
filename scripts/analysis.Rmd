@@ -167,17 +167,24 @@ SPEI calculations require a 30 year monthly means dataset to be compared to. The
 out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 
 cloudCover <- rast('../data/raw/clouds.tif')
-sunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+# sunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
 
 vs <- rast(file.path(out_p, 'vs', (list.files(file.path(out_p, 'vs')))))
 tmax <- rast(file.path(out_p, 'tmmx', (list.files(file.path(out_p, 'tmmx')))))
 tmin <- rast(file.path(out_p, 'tmmn', (list.files(file.path(out_p, 'tmmn')))))
 pr <- rast(file.path(out_p, 'pr', (list.files(file.path(out_p, 'pr')))))
 
+names(vs) <- namer(vs, start = 1979)
+names(tmax) <- namer(tmax, start = 1979)
+names(tmin) <- namer(tmin, start = 1979)
+names(pr) <- namer(pr, start = 1979)
+names(cloudCover) <- namer(cloudCover, start = 2000)
+variables <- c(vs, tmax, tmin, pr, cloudCover)
 
-
-sh <- as.data.frame(SunHours, xy = T) %>% 
+sh <- as.data.frame(variables, xy = T) 
   pivot_longer(APR:SEPT)
+  
+  head(sh)
 
 penman(Tmin = $Tmin, Tmax = $Tmax, U2 = $WindSpeed, # wind speeds
        lat = $Centroid, #
