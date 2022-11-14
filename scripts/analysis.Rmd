@@ -99,7 +99,7 @@ out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 crop_p <- '../data/raw/UFO_slope_deg.tif'
 
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'vs')
-gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'pr')
+gridSTATS(inpath = root_p , FUN = sum, outpath = out_p, cropRast = crop_p, variable = 'pr')
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmn')
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmx')
 
@@ -155,10 +155,11 @@ rm(dpath, dem)
 ```{r resample rasters to same resolution stack and extract}
 SunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
 SunHours <- resample(SunHours, template, method  = 'cubic')
-SunHours <- SunHours[[unique(dmonths)]]
+SunHours <- SunHours[[unique(dmonths_normal)]]
 writeRaster(SunHours, 
             '/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif',
             overwrite = T)
+rm(template)
 ```
 
 SPEI calculations require a 30 year monthly means dataset to be compared to. The years 1979-2014 were used as a 35 year reference set. SPEI was then calculated for the years 2014-2021. 
@@ -167,7 +168,8 @@ SPEI calculations require a 30 year monthly means dataset to be compared to. The
 out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 
 cloudCover <- rast('../data/raw/clouds.tif')
-# sunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+sunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+dem <- rast('../data/raw/dem.tif')
 
 vs <- rast(file.path(out_p, 'vs', (list.files(file.path(out_p, 'vs')))))
 tmax <- rast(file.path(out_p, 'tmmx', (list.files(file.path(out_p, 'tmmx')))))
@@ -178,19 +180,39 @@ names(vs) <- namer(vs, start = 1979)
 names(tmax) <- namer(tmax, start = 1979)
 names(tmin) <- namer(tmin, start = 1979)
 names(pr) <- namer(pr, start = 1979)
-names(cloudCover) <- namer(cloudCover, start = 2000)
-variables <- c(vs, tmax, tmin, pr, cloudCover)
+names(dem) <- 'elevation'
+variables <- c(vs, tmax, tmin, pr, dem)
 
-sh <- as.data.frame(variables, xy = T) 
-  pivot_longer(APR:SEPT)
-  
-  head(sh)
+names(cloudCover) <- paste0('cloudcover_', names(cloudCover))
+names(sunHours) <- paste0('sunhours_', names(sunHours))
+suncloud <- c(cloudCover, sunHours)
 
-penman(Tmin = $Tmin, Tmax = $Tmax, U2 = $WindSpeed, # wind speeds
-       lat = $Centroid, #
+cloudvals <- as.data.frame(suncloud) %>% 
+  rownames_to_column('CellID') %>% 
+  pivot_longer(!CellID, names_to = 'combo', values_to = 'value') %>% 
+  separate(combo, c('variable', 'month')) %>% 
+  pivot_wider(names_from = variable, values_from = value)
+
+drought_vars <- as.data.frame(variables, xy = T) %>% 
+  rownames_to_column('CellID') %>% 
+  pivot_longer(4:(ncol(.)-1)) %>% 
+  separate(name, c('variable', 'month', 'year')) %>% 
+  pivot_wider( names_from = variable, values_from = value) %>% 
+  left_join(., cloudvals)
+
+drought_vars <- filter(drought_vars, CellID == 1)
+
+pen <- penman(Tmin = drought_vars$tmin, Tmax = drought_vars$tmax,
+       U2 = drought_vars$vs, # wind speeds
+       lat = drought_vars$y[1], #
        Rs = NA, Ra = NA, # but could get  both from r.sun ??
-       tsun = $SunHours, CC = $CloudCover, z = $ElevationM, na.rm = FALSE)
+       tsun = drought_vars$sunhours, # CC = drought_vars$cloudcover,
+       z = drought_vars$elevation[1], na.rm = TRUE)
 
+pen
+
+rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud, 
+   SunHours, pr, out_p)
 ```
 
 
@@ -199,6 +221,13 @@ penman(Tmin = $Tmin, Tmax = $Tmax, U2 = $WindSpeed, # wind speeds
 library(SPEI)
 
 data(wichita)
+
+pen <- penman(wichita$TMIN,
+              wichita$TMAX,
+              wichita$AWND,
+              tsun=wichita$TSUN,lat=37.6475, z=402.6, na.rm=TRUE)
+
+pen
 
 # Potential Evapotransrespiration,
  # requires the monthly mean temperature, and the latitudinal centroid of the cell
