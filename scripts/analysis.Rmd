@@ -21,13 +21,13 @@ knitr::opts_chunk$set(warning = F)
 ```{r}
 library(tidyverse)
 library(terra)
+source('functions.R')
 ```
 
 
 Create potential solar hours rasters
 
 "Elevation, aspect and slope input values should not be reclassified into coarser categories. This could lead to incorrect results. " - r.sun man pages
-
 
 ```{r Create template raster for sun hours, eval = F}
 
@@ -62,11 +62,7 @@ exit
 
 The means of each month was taken and used as sun values across the entirety of the temporal domain.
 ```{r Process Sun Hour Data into Monthly Means, eval =F}
-dmonths <- c(
-  rep('JAN', length(1:31)), rep('FEB', length(32:59)), rep('MAR', length(60:90)),
-  rep('APR', length(91:120)), rep('MAY', length(121:151)), rep('JUN', length(152:181)),
-  rep('JUL', length(182:212)), rep('AUG', length(213:243)), rep('SEPT', length(244:273)),
-  rep('OCT', length(274:304)), rep('NOV', length(305:334)), rep('DEC', length(335:365)) )
+
 sh_p <- '/hdd/Geospatial_data/sunhours/output'
 
 files <- data.frame(filename = list.files(sh_p)) %>% 
@@ -87,48 +83,6 @@ file.remove(files$fpath)
 
 rm(pancake, dmonths, sh_p, files, mean_rasters)
 ```
-
-
-```{r Border}
-border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
-```
-
-```{r Crop Cloud data, eval = F}
-
-cpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/cloud'
-cfiles <- file.path(cpath, list.files(cpath, pattern = "tif$"))
-clouds <- rast(cfiles)
-
-border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(clouds))
-clouds <- crop(clouds, border)
-
-clouds
-
-writeRaster(clouds, '../data/raw/clouds.tif', NAflag=NA, overwrite = T)
-rm(cpath, clouds, border, cfiles)
-```
-
-
-```{r subtract clouds from sun hours}
-
-cloud_rasters <- rast('../data/raw/clouds.tif')
-max(cloud_rasters)
-
-range(cloud_rasters)
-```
-
-```{r Crop DEM, eval = F}
-
-dpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/dem'
-dem <- rast(file.path(dpath, list.files(dpath, pattern = "bil$", recursive = T)))
-
-border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(dem))
-dem <- crop(dem, border)
-writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
-
-rm(dpath, dem)
-```
-
 
 ```{r Download climate vars from gridmet and subset, eval = F}
 
@@ -152,6 +106,85 @@ gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, vari
 rm(root_p, out_p, crop_p, gridSTATS)
 ```
 
+```{r Border}
+border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
+```
+
+```{r Crop Cloud data, eval = F}
+
+cpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/cloud'
+cfiles <- file.path(cpath, list.files(cpath, pattern = "tif$"))
+clouds <- rast(cfiles)
+
+border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(clouds))
+clouds <- crop(clouds, border)
+template <- rast('/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
+clouds <- aggregate(clouds, fact =4)
+clouds <- resample(clouds, template, method  = 'cubic')
+names(clouds) <- unique(dmonths)
+
+writeRaster(clouds, '../data/raw/clouds.tif', NAflag=NA, overwrite = T)
+rm(cpath, clouds, border, cfiles)
+```
+
+
+```{r subtract clouds from sun hours, eval = F}
+cloud_rasters <- rast('../data/raw/clouds.tif')
+# cannot figure out what the hell these values represent...
+plot(cloud_rasters)
+
+```
+
+```{r Crop DEM, eval = F}
+
+dpath <- '/media/sagesteppe/ExternalHD/drought_geospatial/dem'
+dem <- rast(file.path(dpath, list.files(dpath, pattern = "bil$", recursive = T)))
+
+border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(dem))
+dem <- crop(dem, border)
+
+template <- rast('/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
+dem <- resample(dem, template, method  = 'cubic')
+dem <- exactextractr::exact_resample(dem, template, "mean")
+
+writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
+rm(dpath, dem)
+```
+
+
+```{r resample rasters to same resolution stack and extract}
+SunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+SunHours <- resample(SunHours, template, method  = 'cubic')
+SunHours <- SunHours[[unique(dmonths)]]
+writeRaster(SunHours, 
+            '/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif',
+            overwrite = T)
+```
+
+SPEI calculations require a 30 year monthly means dataset to be compared to. The years 1979-2014 were used as a 35 year reference set. SPEI was then calculated for the years 2014-2021. 
+
+```{r Calculate SPEI}
+out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
+
+cloudCover <- rast('../data/raw/clouds.tif')
+sunHours <- rast('/media/sagesteppe/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+
+vs <- rast(file.path(out_p, 'vs', (list.files(file.path(out_p, 'vs')))))
+tmax <- rast(file.path(out_p, 'tmmx', (list.files(file.path(out_p, 'tmmx')))))
+tmin <- rast(file.path(out_p, 'tmmn', (list.files(file.path(out_p, 'tmmn')))))
+pr <- rast(file.path(out_p, 'pr', (list.files(file.path(out_p, 'pr')))))
+
+
+
+sh <- as.data.frame(SunHours, xy = T) %>% 
+  pivot_longer(APR:SEPT)
+
+penman(Tmin = $Tmin, Tmax = $Tmax, U2 = $WindSpeed, # wind speeds
+       lat = $Centroid, #
+       Rs = NA, Ra = NA, # but could get  both from r.sun ??
+       tsun = $SunHours, CC = $CloudCover, z = $ElevationM, na.rm = FALSE)
+
+```
 
 
 # Calculation of SPEI 

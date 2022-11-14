@@ -100,3 +100,9 @@ gridSTATS <- function(inpath, FUN, outpath, cropRast, variable){
   mapply(writeRaster, rasta, fnames)
   message(paste0(variable, ' has finished processing and is saved as a stack.'))
 }
+
+dmonths <- c(
+  rep('JAN', length(1:31)), rep('FEB', length(32:59)), rep('MAR', length(60:90)),
+  rep('APR', length(91:120)), rep('MAY', length(121:151)), rep('JUN', length(152:181)),
+  rep('JUL', length(182:212)), rep('AUG', length(213:243)), rep('SEPT', length(244:273)),
+  rep('OCT', length(274:304)), rep('NOV', length(305:334)), rep('DEC', length(335:365)) )
