@@ -202,7 +202,6 @@ names(dem) <- 'elevation'
 variables <- c(vs, tmax, tmin, pr, dem)
 
 names(cloudCover) <- paste0('cloudcover_', names(cloudCover))
-cloudCover <- cloudCover/100
 names(sunHours) <- paste0('sunhours_', names(sunHours))
 suncloud <- c(cloudCover, sunHours)
 
@@ -218,16 +217,25 @@ drought_vars <- as.data.frame(variables, xy = T) %>%
   pivot_wider( names_from = variable, values_from = value) %>% 
   left_join(., cloudvals)
 
+# drought_vars <- filter(drought_vars, CellID == 1)
+
 rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours)
 
+drought_vars <- drought_vars[complete.cases(drought_vars),]
+
 out <- drought_vars %>% 
+  rowwise() %>% 
   split(., .$CellID) %>% 
-  lapply(., PeTbyCell) %>% 
-  bind_rows() %>% 
-  arrange(year, month, CellID)
-#  split(., .$year) 
+  map(~ PeTbyCell(x = .x))
 
 head(out)
+
+pen <- penman(Tmin = drought_vars$tmin, Tmax = drought_vars$tmax,
+       U2 = drought_vars$vs, # wind speeds
+       lat = drought_vars$y[1], #
+       Rs = NA, Ra = NA, # but could get  both from r.sun ??
+       tsun = drought_vars$sunhours, # CC = drought_vars$cloudcover,
+       z = drought_vars$elevation[1], na.rm = TRUE)
 
 rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud, 
    SunHours, pr, out_p)
@@ -235,19 +243,18 @@ rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud,
 
 
 # Calculation of SPEI 
-
 ```{r}
 library(SPEI)
 
 data(wichita)
+
 
 pen <- penman(wichita$TMIN,
               wichita$TMAX,
               wichita$AWND,
               tsun=wichita$TSUN,lat=37.6475, z=402.6, na.rm=TRUE)
 
-names(pen) <- wichita$YEAR
-names(pen)
+pen
 
 # Potential Evapotransrespiration,
  # requires the monthly mean temperature, and the latitudinal centroid of the cell
