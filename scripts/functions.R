@@ -142,14 +142,20 @@ namer <- function(raster, var, start, end){
 #' of spatial and temporal values. 
 
 PeTbyCell <- function(x, rast){
-  y <- x %>% 
-    pmap(~SPEI::penman(Tmin = x$tmin, Tmax = x$tmax,
-                       U2 = x$vs, lat = x$y[1], #
-                       Rs = NA, Ra = NA, # but could get  both from r.sun ??
-                       tsun = x$sunhours, # CC = drought_vars$cloudcover,
-                       z = x$elevation[1], na.rm = F)
-    )  # super!!!! slow !!!! yeeba !
   
+  y <- SPEI::penman(Tmin = x$tmin, Tmax = x$tmax,
+         U2 = x$vs, lat = x$y[1], #
+         Rs = NA, Ra = NA, # but could get  both from r.sun ??
+         tsun = x$sunhours, # CC = drought_vars$cloudcover,
+         z = x$elevation[1], na.rm = T)
+  
+  y <- data.frame( y) %>% 
+    rename(ETO = 1) %>% 
+    mutate(CellID = as.numeric(x$CellID), year = as.numeric(x$year), month = x$month, precip = x$pr, 
+           balance = precip - ETO) %>% 
+    select(CellID, year, month, precip, ETO, balance)
+  
+  return(y)
   # here need to determine WHICH cells were not in the complete cases !=, 
   # and remove these from the raster stack? and then project these values into a new pancake?
   
