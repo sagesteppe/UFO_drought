@@ -99,11 +99,29 @@ out_p <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 crop_p <- '../data/raw/UFO_slope_deg.tif'
 
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'vs')
-gridSTATS(inpath = root_p , FUN = sum, outpath = out_p, cropRast = crop_p, variable = 'pr')
+gridSTATS(inpath = root_p , FUN = 'sum', outpath = out_p, cropRast = crop_p, variable = 'pr')
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmn')
 gridSTATS(inpath = root_p , FUN = mean, outpath = out_p, cropRast = crop_p, variable = 'tmmx')
 
-rm(root_p, out_p, crop_p, gridSTATS)
+
+# work : mean, median, stdev
+# do not work: min, max, range
+
+fchoice <- function(FUN, x){
+  if(substitute(FUN) == 'mean'){mean(x)} else 
+    if(substitute(FUN) == 'sum'){sum(x)} else 
+      if(substitute(FUN) == 'median'){median(x)} else 
+        if(substitute(FUN) == 'mode'){mode(x)} else 
+          if(substitute(FUN) == 'range'){range(x)} else 
+            if(substitute(FUN) == 'min'){min(x)}
+}
+
+testRast <- gridSTATS(inpath = root_p , FUN = "mean", outpath = out_p, 
+                      cropRast = crop_p, variable = 'pr')
+
+test(FUN = 'range', testRast)
+
+frm(root_p, out_p, crop_p, gridSTATS)
 ```
 
 ```{r Border}
@@ -192,7 +210,6 @@ cloudvals <- as.data.frame(suncloud) %>%
   pivot_longer(!CellID, names_to = 'combo', values_to = 'value') %>% 
   separate(combo, c('variable', 'month')) %>% 
   pivot_wider(names_from = variable, values_from = value)
-
 drought_vars <- as.data.frame(variables, xy = T) %>% 
   rownames_to_column('CellID') %>% 
   pivot_longer(4:(ncol(.)-1)) %>% 
@@ -200,7 +217,17 @@ drought_vars <- as.data.frame(variables, xy = T) %>%
   pivot_wider( names_from = variable, values_from = value) %>% 
   left_join(., cloudvals)
 
-drought_vars <- filter(drought_vars, CellID == 1)
+# drought_vars <- filter(drought_vars, CellID == 1)
+
+rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours)
+
+
+drought_vars <- drought_vars[complete.cases(drought_vars),]
+
+out <- drought_vars %>% 
+  rowwise() %>% 
+  split(., .$CellID) %>% 
+  map(~ PeTbyCell(x = .x))
 
 pen <- penman(Tmin = drought_vars$tmin, Tmax = drought_vars$tmax,
        U2 = drought_vars$vs, # wind speeds
@@ -208,8 +235,6 @@ pen <- penman(Tmin = drought_vars$tmin, Tmax = drought_vars$tmax,
        Rs = NA, Ra = NA, # but could get  both from r.sun ??
        tsun = drought_vars$sunhours, # CC = drought_vars$cloudcover,
        z = drought_vars$elevation[1], na.rm = TRUE)
-
-pen
 
 rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud, 
    SunHours, pr, out_p)
@@ -221,6 +246,7 @@ rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud,
 library(SPEI)
 
 data(wichita)
+
 
 pen <- penman(wichita$TMIN,
               wichita$TMAX,

@@ -71,17 +71,19 @@ gridSTATS <- function(inpath, FUN, outpath, cropRast, variable){
   } else {
     border <- cropRast
   }
+  message('Projection complete, now cropping')
   rastIN <- crop(rastIN, border)
+  message('Cropping complete, now calculating')
   
   rasta <- vector(mode = "list", length = nrow(leapYearLookUp))
   for (i in 1:nrow(leapYearLookUp)){
     rasta[[i]] <- 
-      FUN(rastIN[[leapYearLookUp[i,'Start']:leapYearLookUp[i,'End']]])
-  }
+      fchoice(FUN, x = rastIN[[leapYearLookUp[i,'Start']:leapYearLookUp[i,'End']]]) 
+    }
   names(rasta) <- leapYearLookUp$MONTH
   rasta <- split(rasta, leapYearLookUp$Year)
   rasta <- lapply(rasta, rast)
-  
+
   # write the results to disk.
   ifelse(!dir.exists(file.path(outpath)), 
          dir.create(file.path(outpath)), FALSE)
@@ -89,9 +91,12 @@ gridSTATS <- function(inpath, FUN, outpath, cropRast, variable){
          dir.create(file.path(outpath, variable)), FALSE)
   fnames <- file.path(outpath, variable, paste0(variable, '_', names(rasta), '.tif'))
   
-  mapply(writeRaster, rasta, fnames)
-  message(paste0(variable, ' has finished processing and is saved as a stack.'))
+  mapply(writeRaster, rasta, fnames, overwrite =T)
+  message(paste0(variable, ' has finished processing and is saved as a stack'))
+  
+  return(rastIN)
 }
+
 
 #' global variable, days in a month - non leap year.
 dmonths_normal <- c(
@@ -125,5 +130,28 @@ namer <- function(raster, var, start, end){
   if(missing(var)){var = deparse(substitute(raster))}
   if(missing(end)){end = (start -1) + dim(raster)[3]/12}
   names <- paste(var, names(raster), rep(start:end, each = 12) ,sep = "_")
+}
+
+
+#' Put reference potential evapotranspiration onto a gridded surface
+#' 
+#' the SPEI function is made to deal with non-explictely spatial data, and to not
+#' deal with replicates cells. gross. we fix that here.
+#' @param x a dataset with all of the metrics for calculating the Pet vars
+#' @param rast a gridded surface for storing the values. We will return a stack 
+#' of spatial and temporal values. 
+
+PeTbyCell <- function(x, rast){
+  y <- x %>% 
+    pmap(~SPEI::penman(Tmin = x$tmin, Tmax = x$tmax,
+                       U2 = x$vs, lat = x$y[1], #
+                       Rs = NA, Ra = NA, # but could get  both from r.sun ??
+                       tsun = x$sunhours, # CC = drought_vars$cloudcover,
+                       z = x$elevation[1], na.rm = F)
+    )  # super!!!! slow !!!! yeeba !
+  
+  # here need to determine WHICH cells were not in the complete cases !=, 
+  # and remove these from the raster stack? and then project these values into a new pancake?
+  
 }
 
