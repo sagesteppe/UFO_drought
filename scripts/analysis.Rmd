@@ -56,6 +56,15 @@ do
   r.out.gdal input=$rasterfari output=$pOUT/${rasterfari} format=GTiff -c --overwrite
 done
 
+r.in.gdal input=/hdd/Geospatial_data/sunhours/input/coarse.tif output=coarseDEM
+
+for i in {1..365}
+do
+  rasterfari=BeamRad$i
+  r.sun beam_rad=$rasterfari day=$i --overwrite nprocs=16 elevation=coarseDEM linke_value=2.325
+  r.out.gdal input=$rasterfari output=$pOUT/${rasterfari} format=GTiff -c --overwrite
+done
+
 exit
 
 ```
@@ -65,11 +74,11 @@ The means of each month was taken and used as sun values across the entirety of 
 
 sh_p <- '/hdd/Geospatial_data/sunhours/output'
 
-files <- data.frame(filename = list.files(sh_p)) %>% 
+files <- data.frame(filename = list.files(sh_p, pattern = 'SunHours')) %>% 
   mutate(number = as.numeric(str_extract_all(filename,"\\(?[0-9,.]+\\)?")),
          fpath = file.path(sh_p, filename)) %>% 
   arrange(number) %>% 
-  bind_cols(., 'Month' =  dmonths)
+  bind_cols(., 'Month' =  dmonths_normal)
 
 mean_rasters <- files %>% 
   split(., .$Month) %>% 
@@ -78,7 +87,29 @@ mean_rasters <- files %>%
   map(., mean)
 mean_rasters <- rast(mean_rasters)
 
-writeRaster(mean_rasters, '/hdd/UFO_drought/data/raw/MeanSunHours.tif', overwrite = T)
+writeRaster(mean_rasters, '../data/raw/MeanSunHours.tif', overwrite = T)
+file.remove(files$fpath)
+
+# repeat the process for solar radiation. 
+files <- data.frame(filename = list.files(sh_p, pattern = 'BeamRad')) %>% 
+  mutate(number = as.numeric(str_extract_all(filename,"\\(?[0-9,.]+\\)?")),
+         fpath = file.path(sh_p, filename)) %>% 
+  arrange(number) %>% 
+  bind_cols(., 'Month' =  dmonths_normal)
+
+mean_rasters <- files %>% 
+  split(., .$Month) %>% 
+  lapply(., '[[', c('fpath')) %>% 
+  map(., rast) %>% 
+  map(., mean)
+mean_rasters <- rast(mean_rasters)
+mean_rasters <- mean_rasters * 0.0036 # conversion to MegaJoules, you can 
+# compare your values to a kilowatt / hour map to see if you are in the range
+# before you do this just do mean( mean_raster/1000 ) and is is really
+# quick to find an annual map, I recommend doing it to make sure your calcs worked
+# out A-OK - this stuff is way outside my wheelhouse. Ours are spot on. 
+
+writeRaster(mean_rasters, '../data/raw/MeanRadiation.tif', overwrite = T)
 file.remove(files$fpath)
 
 rm(pancake, dmonths, sh_p, files, mean_rasters)
