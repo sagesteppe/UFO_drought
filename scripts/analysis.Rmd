@@ -267,19 +267,32 @@ drought_vars <- as.data.frame(variables, xy = T) %>%
 
 rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours)
 
-drought_vars <- drought_vars[complete.cases(drought_vars),]
+# drought_vars <- drought_vars[complete.cases(drought_vars),]
 out <- drought_vars %>% 
   rowwise() %>% 
   split(., .$CellID) %>% 
   map(~ PeTbyCell(x = .x)) %>% 
   bind_rows() %>% 
-  arrange(CellID, year)
+  arrange(CellID, year) %>% 
+  split(., .$CellID) %>% 
+  map(~ SPEIbyCell(x = .x, start_yr = 1979, id_var = 'CellID')) %>% 
+  bind_rows()
 
-speiByCell
+# now we will split these out so that each year x calculation duration has a stack. 
+resin <- out %>% 
+  pivot_longer(cols = starts_with('months'), names_to = 'period', values_to = 'SPEI') %>% 
+  split(., .[,c('period','Year', 'Month')]) %>% 
+  map(~ rast(template, vals = .x$SPEI))
 
-nineteen79 <- out %>% filter(CellID == 1)
-spei3 <- spei(nineteen79[,'balance'], scale = 12) # seasonal
-plot(spei3)
+vars <- c('months_6', 'months_12', 'months_24')
+times <- leapYearLookUp %>% 
+  mutate(time = paste0(Year, '.', MONTH)) %>% 
+  pull(time)
+vars2 <- paste0(rep(vars, each =  length(times)), '.', times)
+
+resin <- resin[vars2]
+rasta <- split(rasta, leapYearLookUp$Year)
+
 
 rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud, 
    SunHours, pr, out_p)
