@@ -184,7 +184,7 @@ leapYearLookUp <- leapYearLookUp()
 #' @param scales, temporal scales to compute spei for, defaults to 6,12,24 months
 #' @param id_var = a column in the dataset which identifies the cell location of these observations
 
-SPEIbyCell <- function(x, start_yr, end_yr, scales, id_var ){
+SPEIbyCell <- function(x, start_yr, end_yr, scales, id_var){
   
   
   if(missing(end_yr)){end_yr = start_yr + (length(x)/12)}

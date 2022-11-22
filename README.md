@@ -38,8 +38,7 @@ National Drought Mitigation Center and University of Nebraska-Lincoln*
 
 <div align="center">
 
-Variables required to calculate SPEI (using the SPEI package), via the
-Penman equation
+Variables to calculate Potential Evaporation via the Penman-Montieth equation 
 
 |            Variable            |           Source            |
 |  :------------------------:    |     :---------------:       |
@@ -51,7 +50,7 @@ Penman equation
 |     mean sun hours (hours)     |     r.sunhours ('sunhour)   |
 |  mean solar radiation (MJ-m-d) |       r.sun ('beam_rad')    |
 |   mean cloud cover (percent)   |     Wilson, EarthEnv        |
-|     elevation in meters        |       EarthEnv 250          |
+|     elevation in meters        |       EarthEnv 90m          |
   
 **Note all of these values are over a month**
 
