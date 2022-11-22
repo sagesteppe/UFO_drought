@@ -47,7 +47,7 @@ Penman equation
 |    mean max temp (ºC)          |       GridMET (tmmx)        |
 |    mean min temp (ºC)          |       GridMET (tmmn)        |
 |    mean max temp (ºC)          |       GridMET (tmmx)        |
-|    mean rel. humidity          | $(T_{rmax} + T_{rmin}) /2$  |
+|    mean rel. humidity          | $(RH_{max} + RH_{min}) /2$  |
 |   mean wind speed (km h-1)     |       GridMET (vs)          |        
 |     mean sun hours (hours)     |     r.sunhours ('sunhour)   |
 |  mean solar radiation (MJ-m-d) |       r.sun ('beam_rad')    |
