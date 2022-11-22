@@ -245,4 +245,3 @@ gridSTATSsum <- function(inpath, outpath, cropRast, variable){
   message(paste0(variable, ' has finished processing and is saved as a stack'))
 }
 
-getwd()
