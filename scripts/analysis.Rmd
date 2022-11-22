@@ -371,24 +371,82 @@ rm(syear, eyear, focal_window, myscales)
 
 We subset the drought data so that the beginning period for all temporal extents has the same start date, January 1981. It is recommended to have 30 years of climate data to compare local conditions to. We will span the years from 1981-2015 as our `r 2015-1981` year background data. This will also allow a slight degree of buffering between our data sets, so that the starting times between our two datasets, the occurrence of drought during the AIM sampling, and the historic climate variables are not temporally replicated. 
 
-```{r, eval  = F}
+```{r Line Plots SPEI of UFO area, eval  = F}
 fp <- '../data/processed/SPEI'
-m6 <- rast(file.path(fp, 'SPEI_months_6.tif'))
 
+v6  <- drought_prep(path = fp, start_layer = 25, set =  '6')
+v12 <- drought_prep(path = fp, start_layer = 25, set = '12')
+v24 <- drought_prep(path = fp, start_layer = 25, set = '24')
 
-d <- values(m6)
-d <- d[, !colSums(is.na(d)), drop = FALSE]
-d <- apply(d, MARGIN = 2, mean)
-d <- data.frame(time=names(d), SPEI=d, row.names=NULL) %>%
-  separate(time, into = c('period', 'year', 'month'), sep = '[.]') %>% 
-  group_by(year) %>% 
-  count()
+drought_mean_vals <- bind_rows(v6, v12, v24) %>% 
+  mutate(period = factor(period, levels = c('months_6', 'months_12', 'months_24')))
   
-  rowid_to_column()
+p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
+  
+  geom_rect(aes(xmin = 2018, xmax = 2022, ymin = -Inf, ymax = Inf, fill = "Sampling Period"), color = 'NA') +
+  geom_hline(aes(yintercept = 0, linetype = 'Normal'),  colour = 'grey25') +
+  geom_hline(aes(yintercept = -1.2, linetype = "Severe Drought"), colour = 'grey25') +
+  scale_linetype_manual(name = "Indicator", values = c(2, 3), 
+                    guide = guide_legend(override.aes = list(color = c("grey25", "grey25")))) +
+  scale_fill_manual('AIM', values = 'lightpink',  
+                      guide = guide_legend(override.aes = list(alpha = 1))) +
+  geom_line() +
+  facet_wrap('period', ncol = 1,   
+             labeller = labeller(period = 
+                                   c("months_6" = "6 month",
+                                     "months_12" = "12 month",
+                                     "months_24" = "24 month"))) +
+  theme_classic() +
+  labs(title = "SPEI of the Uncompahgre Field Office Area (1981-2021)",
+    x = NULL, y = "SPEI") +
+  theme(plot.title = element_text(hjust = 0.5, 1.2), 
+        strip.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title.align = 0.5,
+        panel.spacing = unit(0,'lines')) +
+  scale_y_continuous(sec.axis = dup_axis(labels = c(' 2', ' 1', ' 0', '-1', '-2')), name = "SPEI") +
+  scale_x_continuous(breaks = c(seq(from = 1980, to = 2020, by = 5))) +
+  labs(linetype = 'Pass Mark') +
+  
+  theme(legend.position = "none")
 
-ggplot(d, aes(x = rowid, y = SPEI)) +
-  geom_line()
 
+p2 <- drought_mean_vals %>% 
+  filter(period == 'months_12') %>% 
+  ggplot(., aes(x = Date, y = SPEI)) +
+  
+  geom_rect(aes(xmin = 2018, xmax = 2022, ymin = -Inf, ymax = Inf, fill = "Sampling Period"), color = 'NA') +
+  geom_hline(aes(yintercept = 0, linetype = 'Normal'),  colour = 'grey25') +
+  geom_hline(aes(yintercept = -1.2, linetype = "Severe Drought"), colour = 'grey25') +
+  
+  geom_point(color = 'grey10', pch = 16, cex = 0.7) +
+  geom_smooth(method = 'loess', colour = 'red', formula = 'y ~ x', fill = 'grey15' ) +
+  scale_linetype_manual(name = "Indicator", values = c(2, 3), 
+                    guide = guide_legend(override.aes = list(color = c("grey25", "grey25")))) +
+  scale_fill_manual('AIM', values = 'lightpink',  
+                    guide = guide_legend(override.aes = list(alpha = 1))) +
+
+  scale_y_continuous( sec.axis = dup_axis(labels = c(' 2', ' 1', ' 0', '-1', '-2')), name = "SPEI") +
+  scale_x_continuous(breaks = c(seq(from = 1980, to = 2020, by = 5))) +
+  theme_classic() +
+  theme(legend.position="none",
+        plot.title = element_text(hjust = 0.5, 1.2), 
+        strip.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        legend.title = element_blank(),
+        legend.title.align = 0.5) +
+  labs(title = "", x = "Year", y = "")
+
+combined_plot <- cowplot::plot_grid(p1, p2,ncol=1, rel_heights = c(1, 0.4))
+
+legend <- cowplot::get_legend( p1 +
+                                 guides(color = guide_legend(nrow = 1)) +
+                                 theme(legend.position = "bottom") )
+
+cowplot::plot_grid(combined_plot, legend,ncol=1,rel_heights = c(1, .1), rel_widths = c(1, 0.3))
 ```
 
 

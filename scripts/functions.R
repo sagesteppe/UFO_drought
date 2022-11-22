@@ -245,3 +245,28 @@ gridSTATSsum <- function(inpath, outpath, cropRast, variable){
   message(paste0(variable, ' has finished processing and is saved as a stack'))
 }
 
+#' reimport SPEI raster stacks and extract vals
+#' 
+#' This function will reimport and extract the values from a SPEI raster stack 
+#' which was generated using the code above. 
+#' @param path path to the folder containing the SPEI values
+#' @param start_layer the first layer in the raster stack to subset onwards from
+#' @param set the name of the raster stack to be grepped
+#' 
+drought_prep <- function(path, start_layer, set){
+
+  if(missing(start_layer)){start_layer = 1}
+  
+  files <- file.path(path, list.files(path, pattern = set))
+  period_vals <- terra::values(terra::rast(files))
+  period_vals <- period_vals[,start_layer:ncol(period_vals)]
+  period_vals <- apply(period_vals, MARGIN = 2, mean)
+  period_vals <- data.frame(time=names(period_vals), SPEI=period_vals, row.names=NULL) %>%
+    tidyr::separate(time, into = c('period', 'year', 'month'), sep = '[.]') %>% 
+    dplyr::mutate(
+      month = if_else(month == 'SEPT', 'SEP', month),
+      Date = zoo::as.yearmon(paste0(month,year), "%b%Y") 
+    )
+  
+  return(period_vals)
+}
