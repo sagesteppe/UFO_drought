@@ -43,14 +43,14 @@ Penman equation
 
 |            Variable            |           Source            |
 |  :------------------------:    |     :---------------:       |
-|        precip sum (mm)         |       GridMET  (pr)         |
-|    mean max temp (ºC)          |       GridMET (tmmx)        |
-|    mean min temp (ºC)          |       GridMET (tmmn)        |
-|    mean rel. humidity          | $(RH_{max} + RH_{min}) /2$  |
-|   mean wind speed (km h-1)     |       GridMET (vs)          |        
+|    precipitation sum (mm)      |       GridMET  (pr)         |
+|      mean max temp (ºC)        |       GridMET (tmmx)        |
+|      mean min temp (ºC)        |       GridMET (tmmn)        |
+|      mean rel. humidity        | $(RH_{max} + RH_{min}) /2$  |
+|    mean wind speed (km h-1)    |       GridMET (vs)          |        
 |     mean sun hours (hours)     |     r.sunhours ('sunhour)   |
 |  mean solar radiation (MJ-m-d) |       r.sun ('beam_rad')    |
-|    mean cloud cover (percent)  |     Wilson, EarthEnv        |
+|   mean cloud cover (percent)   |     Wilson, EarthEnv        |
 |     elevation in meters        |       EarthEnv 250          |
   
 **Note all of these values are over a month**
