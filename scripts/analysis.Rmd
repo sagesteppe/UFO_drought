@@ -153,7 +153,7 @@ ifelse(!dir.exists(file.path(out_p, 'rhmean')),
 fnames <- file.path(out_p, 'rhmean', paste0('rhmean', '_', names(rhmean), '.tif'))
 mapply(writeRaster, rhmean, fnames, overwrite =T)
 
-frm(root_p, out_p, crop_p, gridSTATS)
+rm(root_p, out_p, crop_p, gridSTATS)
 ```
 
 ```{r Border}
@@ -193,6 +193,7 @@ SunHours <- SunHours * cloud_rasters
 
 writeRaster(SunHours, '../data/raw/MeanSunHours.tif',
             overwrite = T)
+rm(SunHours)
 ```
 
 
@@ -204,6 +205,7 @@ solar_radiation <- project(solar_radiation, crs(template))
 
 writeRaster(solar_radiation, '../data/raw/MeanSolarRadiation.tif',
             overwrite = T)
+rm(solar_radiation)
 ```
 
 
@@ -220,7 +222,7 @@ dem <- resample(dem, template, method  = 'cubic')
 dem <- exactextractr::exact_resample(dem, template, "mean")
 
 writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
-rm(dpath, dem)
+rm(dpath, dem, template)
 ```
 
 SPEI calculations require a 30 year monthly means dataset to be compared to. The years 1979-2014 were used as a 35 year reference set. SPEI was then calculated for the years 2014-2021. 
@@ -265,7 +267,8 @@ drought_vars <- as.data.frame(variables, xy = T) %>%
   left_join(., cloudvals) %>% 
   mutate(across(.cols = tmax:tmin, ~.x - 273.5 ))
 
-rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours)
+rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours, rh, 
+   solarRadiation, cloud_rasters)
 
 # drought_vars <- drought_vars[complete.cases(drought_vars),]
 out <- drought_vars %>% 
@@ -289,62 +292,31 @@ times <- leapYearLookUp %>%
   mutate(time = paste0(Year, '.', MONTH)) %>% 
   pull(time)
 vars2 <- paste0(rep(vars, each =  length(times)), '.', times)
+splits <- data.frame(raw = vars2) %>% 
+  separate(raw, into = c('period', 'year', 'month'), sep = '[.]')
 
 resin <- resin[vars2]
-rasta <- split(rasta, leapYearLookUp$Year)
+resin <- split(resin, splits$period)
+resin <- lapply(resin, rast)
+resin <- lapply(resin, focal, w = 9, na.policy="only",  na.rm=TRUE, fun = mean)
 
+outpath <- '../data/processed'
+variable <- 'SPEI'
+ifelse(!dir.exists(file.path(outpath)), 
+       dir.create(file.path(outpath)), FALSE)
+ifelse(!dir.exists(file.path(outpath, variable)), 
+       dir.create(file.path(outpath, variable)), FALSE)
+fnames <- file.path(outpath, variable, paste0(variable, '_', names(resin), '.tif'))
+mapply(writeRaster, resin, fnames, overwrite = T)
 
 rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud, 
-   SunHours, pr, out_p)
+   SunHours, pr, out_p, outpath, variable, resin , splits, vars2, vars, out, 
+   fnames, times, drought_vars)
 ```
 
 
-# Calculation of SPEI 
-
-```{r}
-library(SPEI)
-data(wichita)
-
-pen <- penman(wichita$TMIN,
-              wichita$TMAX,
-              wichita$AWND,
-              tsun=wichita$TSUN,lat=37.6475, z=402.6, na.rm=TRUE)
-
-
-# Potential Evapotransrespiration,
- # requires the monthly mean temperature, and the latitudinal centroid of the cell
-wichita$PET <- thornthwaite(wichita$TMED, 37.6475) 
-
-# the total monthly precipitation minus the 
-# potential evapotransrespiration is the Water Balance
-wichita$BAL <- wichita$PRCP-wichita$PET 
-
-wichita <- ts(wichita[,-c(1,2)], end=c(2011,10), frequency=12)
-plot(wichita)
-
-# Calculate the SPEI here
-spei3 <- spei(wichita[,'BAL'], scale = 3) # seasonal
-spei12 <- spei(wichita[,'BAL'], scale = 12) # yearly
-
-plot(spei3)
-plot(spei12)
-
-rm(wichita)
-data(wichita)
-
-PET <- thornthwaite(wichita$TMED, 37.6475) 
-
-# the total monthly precipitation minus the 
-# potential evapotransrespiration is the Water Balance
-BAL <- wichita$PRCP-PET 
-
-wichita <- ts(wichita[,-c(1,2)], end=c(2011,10), frequency=12)
-plot(wichita)
-
-# Calculate the SPEI here
-spei1 <- spei(wichita[,'BAL'], scale = 1) # one month
-spei3 <- spei(wichita[,'BAL'], scale = 3) # seasonal
-spei12 <- spei(wichita[,'BAL'], scale = 12) # yearly
-
+```{r, eval = F}
+rm(leapYearLookUp, dmonths_leap, dmonths_normal, path, fchoice, gridSTATSsum, 
+   namer, PeTbyCell, SPEIbyCell)
 ```
 
