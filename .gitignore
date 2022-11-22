@@ -3,9 +3,4 @@ data/raw/
 *.tif
 data
 data/
-data/.gitignore
-data/processed/
-data/raw/MeanSolarRadiation.tif
-data/raw/UFO_slope_deg.tif
-data/raw/clouds.tif
-data/raw/dem.tif
+

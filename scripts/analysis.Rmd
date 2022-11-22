@@ -225,10 +225,11 @@ writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
 rm(dpath, dem, template)
 ```
 
-SPEI calculations require a 30 year monthly means dataset to be compared to. The years 1979-2014 were used as a 35 year reference set. SPEI was then calculated for the years 2014-2021. 
-
 ```{r Calculate SPEI}
+syear <- 1979
+eyear <- 2021
 out_p <- '/media/reed/ExternalHD/drought_geospatial/monthly_gridmet'
+template <- rast('/media/reed/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
 
 cloudCover <- rast('../data/raw/clouds.tif')
 sunHours <- rast('../data/raw/MeanSunHours.tif')
@@ -241,11 +242,11 @@ tmin <- rast(file.path(out_p, 'tmmn', (list.files(file.path(out_p, 'tmmn')))))
 pr <- rast(file.path(out_p, 'pr', (list.files(file.path(out_p, 'pr'))))) # rhmean.tif
 rh <- rast(file.path(out_p, 'rhmean', (list.files(file.path(out_p, 'rhmean')))))
 
-names(vs) <- namer(vs, start = 1979)
-names(tmax) <- namer(tmax, start = 1979)
-names(tmin) <- namer(tmin, start = 1979)
-names(pr) <- namer(pr, start = 1979)
-names(rh) <- namer(rh, start = 1979)
+names(vs) <- namer(vs, start = syear, end = eyear)
+names(tmax) <- namer(tmax, start = syear)
+names(tmin) <- namer(tmin, start = syear)
+names(pr) <- namer(pr, start = syear)
+names(rh) <- namer(rh, start = syear)
 names(dem) <- 'elevation'
 variables <- c(vs, tmax, tmin, rh, pr, dem)
 
@@ -270,6 +271,7 @@ drought_vars <- as.data.frame(variables, xy = T) %>%
 rm(cloudvals, suncloud, vs, tmax, tmin, variables, dem, pr, sunHours, rh, 
    solarRadiation, cloud_rasters)
 
+myscales <- c(6,12,24)
 # drought_vars <- drought_vars[complete.cases(drought_vars),]
 out <- drought_vars %>% 
   rowwise() %>% 
@@ -278,7 +280,7 @@ out <- drought_vars %>%
   bind_rows() %>% 
   arrange(CellID, year) %>% 
   split(., .$CellID) %>% 
-  map(~ SPEIbyCell(x = .x, start_yr = 1979, id_var = 'CellID')) %>% 
+  map(~ SPEIbyCell(x = .x, start_yr = syear, id_var = 'CellID', scales = myscales)) %>% 
   bind_rows()
 
 # now we will split these out so that each year x calculation duration has a stack. 
@@ -292,13 +294,16 @@ times <- leapYearLookUp %>%
   mutate(time = paste0(Year, '.', MONTH)) %>% 
   pull(time)
 vars2 <- paste0(rep(vars, each =  length(times)), '.', times)
+names(resin) <- vars2
 splits <- data.frame(raw = vars2) %>% 
   separate(raw, into = c('period', 'year', 'month'), sep = '[.]')
 
 resin <- resin[vars2]
 resin <- split(resin, splits$period)
 resin <- lapply(resin, rast)
-resin <- lapply(resin, focal, w = 9, na.policy="only",  na.rm=TRUE, fun = mean)
+
+focal_window <- 9
+resin <- lapply(resin, focal, w = focal_window, na.policy="only",  na.rm=TRUE, fun = mean)
 
 outpath <- '../data/processed'
 variable <- 'SPEI'
@@ -314,9 +319,35 @@ rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud,
    fnames, times, drought_vars)
 ```
 
+SPEI was calculated for all `r toString(eyear-syear)` years between `r toString(syear)`-`r toString(eyear)`. Cells in rasters which contained missing (NA) values, these resulting from missing a value required for either the penman or SPEI calculations, were filled using the 'focal' function from the r package 'Terra'. This function calculated the mean of the `r toString(focal_window)`. SPEI was calculated using moisture balances of the: `r toString(myscales)` months preceding the current month of analysis. For example, the SPEI value for the Month of January 1981, under a scenario with a 6 month window, would go back as far as June 1980, while for a longer window such as 24 months, would go back to January 1979. Because our SPEI calculations included these windows, each data set could not-natively start at the same date. For example our dataset with the longest SPEI window, `r toString(max(myscales))` months, exceeded the shortest windows by `r toString(max(myscales) - min(myscales))`. Accordingly, we removed any months of values preceding the origin date for the start of the longest SPEI calculation intervals, and for ease of analysis and reporting began our background climate dataset in `r toString(syear + max(myscales)/12)`.
 
 ```{r, eval = F}
 rm(leapYearLookUp, dmonths_leap, dmonths_normal, path, fchoice, gridSTATSsum, 
    namer, PeTbyCell, SPEIbyCell)
+rm(syear, eyear, focal_window, myscales)
+```
+
+
+We subset the drought data so that the beginning period for all temporal extents has the same start date, January 1981. It is recommended to have 30 years of climate data to compare local conditions to. We will span the years from 1981-2015 as our `r 2015-1981` year background data. This will also allow a slight degree of buffering between our data sets, so that the starting times between our two datasets, the occurrence of drought during the AIM sampling, and the historic climate variables are not temporally replicated. 
+
+```{r}
+fp <- '../data/processed/SPEI'
+m6 <- rast(file.path(fp, 'SPEI_months_6.tif'))
+
+
+d <- values(m6)
+d <- d[, !colSums(is.na(d)), drop = FALSE]
+d <- apply(d, MARGIN = 2, mean)
+d <- data.frame(time=names(d), SPEI=d, row.names=NULL) %>%
+  separate(time, into = c('period', 'year', 'month'), sep = '[.]') %>% 
+  group_by(year) %>% 
+  count()
+  
+#  mutate(time = str_remove(time, 'months_[0-9]\\.')) %>% 
+  rowid_to_column()
+
+ggplot(d, aes(x = rowid, y = SPEI)) +
+  geom_line()
+
 ```
 
