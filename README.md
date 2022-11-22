@@ -41,16 +41,18 @@ National Drought Mitigation Center and University of Nebraska-Lincoln*
 Variables required to calculate SPEI (using the SPEI package), via the
 Penman equation
 
-|           Variable            |         Source         |
-| :------------------------:    |   :---------------:    |
-|       precip sum (mm)         |      GridMET  (pr)     |
-|   mean daily max temp (ºC)    |      GridMET (tmmx)    |
-|   mean daily min temp (ºC)    |      GridMET (tmmn)    |
-|       mean temp (ºC.)         |$(T_{max} + T_{min}) /2$|
-|  mean wind speed (km h-1)     |      GridMET (vs)      |        
-|    mean sun hours (hours)     |         r.sun          |
-|   mean cloud cover (percent)  |    Wilson, EarthEnv    |
-|    elevation in meters        |      EarthEnv 250      |
+|            Variable            |           Source            |
+|  :------------------------:    |     :---------------:       |
+|        precip sum (mm)         |       GridMET  (pr)         |
+|    mean max temp (ºC)          |       GridMET (tmmx)        |
+|    mean min temp (ºC)          |       GridMET (tmmn)        |
+|    mean max temp (ºC)          |       GridMET (tmmx)        |
+|    mean rel. humidity          | $(T_{rmax} + T_{rmin}) /2$  |
+|   mean wind speed (km h-1)     |       GridMET (vs)          |        
+|     mean sun hours (hours)     |     r.sunhours ('sunhour)   |
+|  mean solar radiation (MJ-m-d) |       r.sun ('beam_rad')    |
+|    mean cloud cover (percent)  |     Wilson, EarthEnv        |
+|     elevation in meters        |       EarthEnv 250          |
   
 **Note all of these values are over a month**
 
