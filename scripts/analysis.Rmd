@@ -453,6 +453,8 @@ p2 <- ggplot(m12, aes(x = Date, y = SPEI)) +
         axis.line = element_blank(),
         legend.title = element_blank(),
         legend.title.align = 0.5) +
+  
+  
   labs(title = NULL, x = "Year", y = NULL)
 
 
