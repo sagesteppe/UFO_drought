@@ -467,6 +467,8 @@ p <- cowplot::plot_grid(combined_plot, legend,ncol=1,rel_heights = c(1, .05), re
 ggsave('SPEI_UFO_AREA.png', plot = p, device = 'png', path = '../results' ,
        scale = 1, width = 3.5, height = 3.5, dpi = 300, 
        units = "in")
+
+rm(p, p1, p2, legend, v6, v12, v24)
 ```
 
 
