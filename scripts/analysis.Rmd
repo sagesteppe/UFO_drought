@@ -530,10 +530,9 @@ From a presentation by Brian Fuchs of the National Drought Mitigation Center and
 
 The drought conditions were variable across not only time, as exemplified in Figure 1, but also to some extent in space, as shown in Figure 2. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. While many plants have physical adaptions for existence in areas with low amounts of precipitation, this balance is still required in order for the perpetuity of healthy vegetation communities (), and even this vegetation may only survive under drought conditions for limited periods of time. 
 
-Drought is a multiscalar, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
+Drought is a multiscalar phenomena, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
 
-In the area of analysis, all durations of drought appear to be more severe in lower elevation areas of the 
-
+In the area of analysis, all duration of drought appear to be more severe in lower elevation areas of the 
 
 ```{r Drought map,fig.cap = "Figure 2. Drought Maps. The left panels show that the area exists in a moisture balance at all time scales considered. Panels at right show that the area varies in the extent to which drought affects the spatial extent of the area. The panel at bottom is a stylized topographic map to provide reference to the area of drought analysis.", warning = F, eval = F}
 
@@ -667,9 +666,15 @@ print(lm12.ac)
 ```
 
 
-> "_All indicators are affected by drought conditions and continued drought is likely to have significant impacts on soil, hydrologic, and biotic integrity. The climate patern of the last 21 years has likely inhibited the recovery of plant communities from the disturbances associated with insects, disease, and wild & domestic grazing (Pellant et al. 2019)_"
+@blm2022cactus, @pellant2020iirh
+
+A Land Health Assessment for a parcel of BLM land which was conducted in 2022, in the northwest portion of the UFO field office, states (@blm2022cactus):
+
+> "_...All indicators are affected by drought conditions and continued drought is likely to have significant impacts on soil, hydrologic, and biotic integrity... The climate patern of the last 21 years has likely inhibited the recovery of plant communities from the disturbances associated with insects, disease, and wild & domestic grazing (@pellant2020iirh)..._"
 >  
 > `r tufte::quote_footer('--- BLM 2022')`
+
+
 
 
 \newpage
