@@ -505,15 +505,14 @@ cs <- as.data.frame(summary(lm12.ac)$tTable)
 ```
 
 
-```{r}
-rm(m12, cs, lm12.ac, conf.int)
-```
-
-
 ![Mean Drought Status of the UFO area over time. Area is pink denotes the period of time which the AIM survey was conducted. Under each measurement window it generally has a negative value of SPEI.](../results/SPEI_UFO_AREA.png)
 
 
 Using the SPEI values from the 12 month calculations evidence of a negative association between year and SPEI over the period of analysis (`r m12$Date[1]` - `r m12$Date[nrow(m12)]`, p = `r toString(round(cs$p[2], 3))`) was found after accounting for the temporal correlation present in the errors of the linear regression model relating the two variables (model call to R: *`r toString(lm12.ac[["call"]])`*). Each 1-unit increase in the values of time (in this case, month) was associated with a decrease in the expected value of SPEI of `r toString(round(lm12.ac[["coefficients"]][["time"]], 4))` units (95% CI: `r toString(round(conf.int$coef[2], 3))` to `r round(conf.int$coef[6], 3)`). In other words, this model indicates that, on average, the area of analysis has become drier. This model has several limitations, which we will not address here, and advocate that it simply be used in a semi-quantitative fashion to indicate that a negative trend in SPEI values is evident.
+
+```{r}
+rm(m12, cs, lm12.ac, conf.int)
+```
 
         SPI Values Interpretation
 |     Value       |    Interpretation       |
@@ -529,9 +528,12 @@ From a presentation by Brian Fuchs of the National Drought Mitigation Center and
 
 \newpage
 
-The drought conditions were variable across not only time, as exemplified in Figure 1, but also in space as shown in Figure 2. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. This is required in order for the perpetuity of healthy vegetation communities. 
+The drought conditions were variable across not only time, as exemplified in Figure 1, but also to some extent in space, as shown in Figure 2. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. While many plants have physical adaptions for existence in areas with low amounts of precipitation, this balance is still required in order for the perpetuity of healthy vegetation communities (), and even this vegetation may only survive under drought conditions for limited periods of time. 
 
-It is evident that the 24 month drought windows have most adversely affected ... 
+Drought is a multiscalar, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
+
+In the area of analysis, all durations of drought appear to be more severe in lower elevation areas of the 
+
 
 ```{r Drought map,fig.cap = "Figure 2. Drought Maps. The left panels show that the area exists in a moisture balance at all time scales considered. Panels at right show that the area varies in the extent to which drought affects the spatial extent of the area. The panel at bottom is a stylized topographic map to provide reference to the area of drought analysis.", warning = F, eval = F}
 
@@ -664,6 +666,10 @@ summary(lm12.ac)
 print(lm12.ac)
 ```
 
+
+> "_All indicators are affected by drought conditions and continued drought is likely to have significant impacts on soil, hydrologic, and biotic integrity. The climate patern of the last 21 years has likely inhibited the recovery of plant communities from the disturbances associated with insects, disease, and wild & domestic grazing (Pellant et al. 2019)_"
+>  
+> `r tufte::quote_footer('--- BLM 2022')`
 
 
 \newpage
