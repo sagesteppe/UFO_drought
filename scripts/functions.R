@@ -270,3 +270,40 @@ drought_prep <- function(path, start_layer, set){
   
   return(period_vals)
 }
+
+#' function to import, subset, and crop rasters using Terra.
+#' Simply reduces script space dedicated to repetitive processing...
+#' @param input_folder path to all of the rasters to be processed
+#' @param template a template raster with desirable extent, crs, grain/resolution
+#' @crs a crs to override the template rasters, e.g. if you want the template to move
+#' into the crs of the input rasters due to large sizes
+#' @frast the first raster in the stack to select
+#' @lrast the lsat raster in the stack to select
+#' @example 
+#' rastIN <- file.path(spei_path,  (list.files(file.path(spei_path))))
+#' template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
+#' output <- lapply(rastIN, rastAlign, template = template, frast = 961)
+#' sixmo <- rast(unlist(output)[1])
+#' @export
+rastAlign <- function(input_paths, template, target_crs, frast, lrast){
+  
+  if(missing(frast)){frast = 1 ; 
+  message('Defaulting to select from the first raster in stack')}
+  if(missing(target_crs)){target_crs = terra::crs(template)}
+  if(missing(template)){stop("a template raster is missing with no default")}
+  
+  if(!file.exists(input_paths)){stop(paste0("Unable to locate file: ", input_paths))}
+  # will need to read in data before setting erast... & crs
+  rasta <- terra::rast(input_paths)
+  if(missing(lrast)){lrast = dim(rasta)[3] ; 
+  message('Defaulting to select until the last raster in stack')}
+  rasta <- rasta[[frast:lrast]]
+  
+  border <- ext(project(template, crs(rasta), threads = T)) # use native CRS for initial crop
+  rasta <- crop(rasta, border)
+  rasta <- project(rasta, crs(template))
+  rasta <- resample(rasta, template)
+  
+  return(rasta)
+  
+}

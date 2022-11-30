@@ -423,11 +423,8 @@ f <- f[[961:dim(f)[3]]]
 
 spei_path <- '../data/raw/SPEI_coarse'
 rastIN <- file.path(spei_path,  (list.files(file.path(spei_path))))
-
-
 template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
-  
-  rastIN
+
 #' function to import, subset, and crop rasters using Terra.
 #' Simply reduces script space dedicated to repetitive processing...
 #' @param input_folder path to all of the rasters to be processed
@@ -436,6 +433,12 @@ template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
 #' into the crs of the input rasters due to large sizes
 #' @frast the first raster in the stack to select
 #' @lrast the lsat raster in the stack to select
+#' @example 
+#' rastIN <- file.path(spei_path,  (list.files(file.path(spei_path))))
+#' template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
+#' output <- lapply(rastIN, rastAlign, template = template, frast = 961)
+#' sixmo <- rast(unlist(output)[1])
+#' @export
 rastAlign <- function(input_paths, template, target_crs, frast, lrast){
   
   if(missing(frast)){frast = 1 ; 
@@ -450,44 +453,21 @@ rastAlign <- function(input_paths, template, target_crs, frast, lrast){
       message('Defaulting to select until the last raster in stack')}
   rasta <- rasta[[frast:lrast]]
   
-  #if(crs(rasta) == ""){crs(rasta) = "epsg:4326"}
-  
-#  templateProjected <- project(template, crs(rasta))
-  rastas_crop <- crop(rasta, ext(template))
-#  rastas_crop <- project(rastas_crop, target_crs)
-#  rastas_resamp <- resample(rastas_crop, template)
-  
-  return(rastas_crop)
+  border <- ext(project(template, crs(rasta), threads = T)) # use native CRS for initial crop
+  rasta <- crop(rasta, border)
+  rasta <- project(rasta, crs(template))
+  rasta <- resample(rasta, template)
+
+  return(rasta)
 
 }
 
-
-
-output <- lapply(rastIN[1], rastAlign, template = template, frast = 961)
-plot(rast(unlist(output)))
-
-r <- rast('../data/raw/SPEI_coarse/spei24.nc')
-crs(r)
-
-
-
-template <- rast('../data/processed/SPEI/SPEI_months_12.tif')
-crs(trasta) <- '+proj=longlat +datum=WGS84 +lon_wrap=180'
-
-  templateProjected <- project(template, crs(trasta))
-  rastas_crop <- crop(trasta, ext(templateProjected))
-  rastas_crop <- project(rastas_crop, target_crs)
-  
-  
-  
-  
-border63 <- ext(project(rast('../data/raw/UFO_slope_deg.tif'), crs(f)))
-f <- crop(f, border63)
-f <- resample(f, template)
-
-
-rm(border63)
+output <- lapply(rastIN, rastAlign, template = template, frast = 961)
+sixmo <- rast(unlist(output)[1])
+twelvemo <- rast(unlist(output)[2])
+twentyfouremo <- rast(unlist(output)[3])
 ```
+
 
 
 ```{r create Line Plots SPEI of UFO area, eval = F}
