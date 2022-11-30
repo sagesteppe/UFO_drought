@@ -260,7 +260,7 @@ drought_prep <- function(path, start_layer, set){
   files <- file.path(path, list.files(path, pattern = set))
   period_vals <- terra::values(terra::rast(files))
   period_vals <- period_vals[,start_layer:ncol(period_vals)]
-  period_vals <- apply(period_vals, MARGIN = 2, mean)
+  period_vals <- apply(period_vals, MARGIN = 2, mean, na.rm = T)
   period_vals <- data.frame(time=names(period_vals), SPEI=period_vals, row.names=NULL) %>%
     tidyr::separate(time, into = c('period', 'year', 'month'), sep = '[.]') %>% 
     dplyr::mutate(

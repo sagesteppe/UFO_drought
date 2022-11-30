@@ -371,7 +371,7 @@ rm(tmax, tmin, vs, variables, cloudCover, cloudvals, dem, sunHours, suncloud,
 SPEI was calculated for all `r toString(eyear-syear)` years between `r toString(syear)`-`r toString(eyear)`. Cells in rasters which contained missing (NA) values, these resulting from missing a value required for either the penman or SPEI calculations, were filled using the 'focal' function from the r package 'Terra'. This function calculated the mean of the `r toString(focal_window)` nearest pixels to the missing value. SPEI was calculated using moisture balances of the: `r toString(myscales)` months preceding the current month of analysis. For example, the SPEI value for the Month of January 1981, under a scenario with a 6 month window, would go back as far as June 1980, while for a longer window such as 24 months, would go back to January 1979. Because our SPEI calculations included these windows, each data set could not-natively start at the same date. For example our dataset with the longest SPEI window, `r toString(max(myscales))` months, exceeded the shortest windows by `r toString(max(myscales) - min(myscales))`. Accordingly, we removed any months of values preceding the origin date for the start of the longest SPEI calculation intervals, and for ease of analysis and reporting began our background climate dataset in `r toString(syear + max(myscales)/12)`.
 
 ```{r}
-rm(leapYearLookUp, dmonths_leap, fchoice, gridSTATSsum, 
+rm(dmonths_leap, fchoice, gridSTATSsum, 
    namer, PeTbyCell, SPEIbyCell, gridSTATS)
 rm(syear, eyear, focal_window, myscales)
 ```
@@ -410,65 +410,82 @@ v24 <- drought_prep(path = fp, start_layer = 25, set = '24')
 drought_mean_vals <- bind_rows(v6, v12, v24) %>% 
   mutate(period = factor(period, levels = c('months_6', 'months_12', 'months_24')))
 
+rm(v6, v12, v24)
 ```
 
+The correlation between the values for SPEI which were calculated locally were compared to those calculcated by the XXX group. SPEI calculated for the same three durations were downloaded from the WEBSITE on (Nov., 30th from 10-11 A.M. RMT). These data were cropped and resampled into the same resolution as the local dataset using bilinear interpolation. 
 
-
-```{r Compare our SPEI values to those from the Official group, eval = F}
-
-spei_path <- '../data/raw/SPEI_coarse'
-f <- rast(file.path(spei_path,  (list.files(file.path(spei_path)))))
-f <- f[[961:dim(f)[3]]]
-
+```{r Compare our SPEI values to those from the Official group - Process, eval = F}
 
 spei_path <- '../data/raw/SPEI_coarse'
 rastIN <- file.path(spei_path,  (list.files(file.path(spei_path))))
 template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
 
-#' function to import, subset, and crop rasters using Terra.
-#' Simply reduces script space dedicated to repetitive processing...
-#' @param input_folder path to all of the rasters to be processed
-#' @param template a template raster with desirable extent, crs, grain/resolution
-#' @crs a crs to override the template rasters, e.g. if you want the template to move
-#' into the crs of the input rasters due to large sizes
-#' @frast the first raster in the stack to select
-#' @lrast the lsat raster in the stack to select
-#' @example 
-#' rastIN <- file.path(spei_path,  (list.files(file.path(spei_path))))
-#' template <- rast('../data/processed/SPEI/SPEI_months_12.tif')[[1]]
-#' output <- lapply(rastIN, rastAlign, template = template, frast = 961)
-#' sixmo <- rast(unlist(output)[1])
-#' @export
-rastAlign <- function(input_paths, template, target_crs, frast, lrast){
-  
-  if(missing(frast)){frast = 1 ; 
-  message('Defaulting to select from the first raster in stack')}
-  if(missing(target_crs)){target_crs = terra::crs(template)}
-  if(missing(template)){stop("a template raster is missing with no default")}
-  
-  if(!file.exists(input_paths)){stop(paste0("Unable to locate file: ", input_paths))}
-  # will need to read in data before setting erast... & crs
-  rasta <- terra::rast(input_paths)
-    if(missing(lrast)){lrast = dim(rasta)[3] ; 
-      message('Defaulting to select until the last raster in stack')}
-  rasta <- rasta[[frast:lrast]]
-  
-  border <- ext(project(template, crs(rasta), threads = T)) # use native CRS for initial crop
-  rasta <- crop(rasta, border)
-  rasta <- project(rasta, crs(template))
-  rasta <- resample(rasta, template)
-
-  return(rasta)
-
-}
-
 output <- lapply(rastIN, rastAlign, template = template, frast = 961)
 sixmo <- rast(unlist(output)[1])
+names(sixmo) <- paste0(leapYearLookUp$Year[25:504], '_', leapYearLookUp$MONTH[25:504])
+
 twelvemo <- rast(unlist(output)[2])
+names(twelvemo) <- paste0(leapYearLookUp$Year[25:504], '_', leapYearLookUp$MONTH[25:504])
+
 twentyfouremo <- rast(unlist(output)[3])
+names(twentyfouremo) <- paste0(leapYearLookUp$Year[25:504], '_', leapYearLookUp$MONTH[25:504])
+
+fp1 <- '../data/processed/SPEI_coarse'
+ifelse(!dir.exists(file.path(fp1)), dir.create(file.path(fp1)), FALSE)
+writeRaster(sixmo, file.path(fp1, 'SPEI_months_06.tif'))
+writeRaster(twelvemo, file.path(fp1, 'SPEI_months_12.tif'))
+writeRaster(twentyfouremo, file.path(fp1, 'SPEI_months_24.tif'))
+
+rm(sixmo, twelvemo, twentyfouremo, rastAlign, output, spei_path, rastIN, template, rastAlign)
 ```
 
+```{r Compare our SPEI values to those from the Official group - Correlation, eval = F}
+fp1 <- '../data/processed/SPEI_coarse'
+v6 <- drought_prep(path = fp1, set =  '6') # These won't entirely as stack won't take
+v12 <- drought_prep(path = fp1, set =  '12') # names... again..
+v24 <- drought_prep(path = fp1, set =  '24')
+drought_standards <- rbind(v6, v12, v24)$SPEI
 
+drt_mn_corr_sub <- drought_mean_vals %>% filter(as.numeric(year) < 2021) %>% 
+  mutate(Data = 'derived')
+drought_standards <- cbind(drt_mn_corr_sub[,1:3], SPEI = drought_standards, 
+                           Date =  drt_mn_corr_sub[,5], Data = 'reference')
+
+drought_corr <- left_join(drt_mn_corr_sub, drought_standards, 
+                by = c('period', 'year', 'month','Date')) %>% 
+  pivot_longer(c(SPEI.x, SPEI.y), values_to = 'SPEI', names_to = 'dataset') %>% 
+  mutate(dataset = if_else(dataset == 'SPEI.x', 'derived', 'reference')) %>% 
+  select(-Data.x, -Data.y)
+
+ggplot(drought_corr, aes(x = Date, y = SPEI, color = dataset)) +
+  geom_line() +
+  scale_colour_manual('Data Source', values = c('#B1624EFF','#5CC8D7FF'), 
+                      labels = c('Derived','Reference')) +
+  facet_wrap(~period, ncol = 1, 
+             labeller = labeller(period = 
+                                   c("months_6" = "6 month",
+                                     "months_12" = "12 month",
+                                     "months_24" = "24 month"))) +
+  theme_bw() +
+  labs(title = "Comparison of SPEI values calculated from different inputs",
+    x = 'Year', y = "SPEI") 
+
+
+#dc <- drought_corr %>% 
+#  filter(dataset == 'derived' & period == 'months_6')  %>% 
+#  mutate(month = str_replace(month, 'SEP', 'SEPT'),
+#          month = factor(month, levels = unique(dmonths_normal)),
+#         year = as.numeric(year),
+#         time = row_number())
+
+#interactive_SAC_model <- mgcv::gam(SPEI ~ s(time), #+ s(month, bs = "cc", k = 12), 
+#                    data = dc, method = 'REML'), correlation = corARMA(form = ~ 1|month, p = 2))
+#summary(interactive_SAC_model)
+#plot(interactive_SAC_model)
+
+rm(v6, v12, v24, fp1, drt_mn_corr_sub, drought_standards)
+```
 
 ```{r create Line Plots SPEI of UFO area, eval = F}
 p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
@@ -525,17 +542,17 @@ m12 <- drought_mean_vals %>%
 #lm12_2 <- update(lm12, correlation=nlme::corARMA(p=1))
 
 # create a more thorough model with time as an effect
-lm12.ac <- nlme::gls(SPEI ~ time, data = m12, correlation = nlme::corAR1(form = ~ 1|year),
+lm12.ac <- nlme::gls(SPEI ~ time, data = m12, correlation = nlme::corAR1(form = ~ 1|month),
               na.action=na.omit)
 
 #forecast::auto.arima(residuals(lm12, start.P = 1))
 #lm12.ac.2 <- update(lm12.ac, correlation=nlme::corARMA(p=1))
 #anova(lm12, lm12_2, lm12.ac, lm12.ac.2)
-# summary(lm12.ac)
-#plot(fitted(lm12.ac),residuals(lm12.ac))
-#abline(h=0,lty=3)
-#qqnorm(lm12.ac)
-#hist(residuals(lm12.ac))
+summary(lm12.ac)
+plot(fitted(lm12.ac),residuals(lm12.ac))
+abline(h=0,lty=3)
+qqnorm(lm12.ac)
+hist(residuals(lm12.ac))
 conf.int <- nlme::intervals(lm12.ac)
 m12$predlm = predict(lm12.ac)
 cs <- as.data.frame(summary(lm12.ac)$tTable)
@@ -583,7 +600,7 @@ ggsave('SPEI_UFO_AREA.png', plot = p, device = 'png', path = '../results' ,
        scale = 1, width = 3.5, height = 3.5, dpi = 300, 
        units = "in")
 
-rm(p, p1, p2, legend, v6, v12, v24, combined_plot, pr, prvals)
+rm(p, p1, p2, legend, combined_plot, pr, prvals)
 ```
 
 
