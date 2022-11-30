@@ -256,10 +256,6 @@ rm(dpath, dem, template)
 
 __Variables to calculate Potential Evaporation via the Penman-Montieth equation__
 
-```{r}
-
-```
-
 
 |            Variable            |           Source            |
 |  :------------------------:    |     :---------------:       |
@@ -388,8 +384,6 @@ We subset the drought data so that the beginning period for all temporal extents
 dem <- rast('../data/raw/dem.tif')
 demvals <- round(values(range(dem)), 0)
 
-
-
 inp <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
 pr <- rast(file.path(inp, 'pr', (list.files(file.path(inp, 'pr')))))  # this is range of 
 pr <- sum(pr)/43
@@ -398,19 +392,15 @@ prvals <- values(range(pr)) * 0.0393701
 rm(dem, pr, inp)
 ```
 
-
-The area of analysis which surrounds the UFO spans XX miles North to South, and XX miles East to West. This area varies in elevation from `r toString(round(min(demvals) * 3.28, -2))` feet (`r round(min(demvals), -1)` m) in the red-rock deserts of the Colorado Plateau Western portion of the extent to over 14,000 feet (4265 + m) in the Alpine peaks in the SE of the extent (the Nucla and Telluride areas, respectively, in figure XX) . The mean annual amount of precipitation varies in these areas from a low of `r toString(round(min(prvals), 0))` inches (`r toString(round(min(prvals) * 2.54, 0))` cm) to `r toString(round(max(prvals), 0))` inches (`r toString(round(max(prvals)* 2.54, 0))` cm). In all areas of analysis precipitation arrives at two time periods. Large amounts of precipitation arrive in winter in the form of snow, which historically has melted slowly in spring making major contributions to soil moisture. In the afternoons of mid-summer days precipitation arrives in the form Monsoons.
-
 ```{r Area of Analysis, fig.cap ="Stylized topographic map of the area of analysis", out.width = '30%'}
 knitr::include_graphics("../results/elevation_contour_drought.png")
-rm(pr, prvals)
 ```
 
-The UFO has oscillated between drought status and times of excessive moisture. The historic values of this would define the natural climatic oscillations which the AIM panel design was intended to capture. For example the 1980's represent a relatively moist period in the history of the UFO, followed by a short drought around 1990. However, as can be inferred from the trend line in (Fig. 1 panel 4), the average SPEI has decreased over time from the beginning of the calculated times to today. However, at no time prior to the initiation of AIM sampling has the drought reached as low as an SPI value as -1.3, which is most evident over a 24 month analysis time period (Fig. 1 panel 3). 
+The area of analysis which surrounds the UFO spans XX miles North to South, and XX miles East to West. This area varies in elevation from `r toString(round(min(demvals) * 3.28, -2))` feet (`r round(min(demvals), -1)` m) in the red-rock deserts of the Colorado Plateau Western portion of the extent to over 14,000 feet (4265 + m) in the Alpine peaks in the SE of the extent (the Nucla and Telluride areas, respectively, *see figure 1*) . The mean annual amount of precipitation varies in these areas from a low of `r toString(round(min(prvals), 0))` inches (`r toString(round(min(prvals) * 2.54, 0))` cm) to `r toString(round(max(prvals), 0))` inches (`r toString(round(max(prvals)* 2.54, 0))` cm). In all areas of analysis precipitation arrives at two time periods. Large amounts of precipitation arrive in winter in the form of snow, which historically has melted slowly in spring making major contributions to soil moisture. In the afternoons of mid-summer days precipitation arrives in the form Monsoons.
 
-While a year, 2019, where moisture exceeded evaporation occurred during the sampling for both 6 and 12 month windows, due to its 24 month period of moisture deficit it is not considered a year which may serve as an example of non-drought status in the time period. 
+The UFO has oscillated between drought status and times of excessive moisture (*see figure 2*). The historic values of this would define the natural climatic oscillations which the AIM panel design was intended to capture. For example the 1980's represent a relatively moist period in the history of the UFO, followed by a short drought around 1990. However, as can be inferred from the trend line in (*see Fig. 1 panel 4*), the average SPEI has decreased over time from the beginning of the calculated times to today. **However, at no time prior to the initiation of AIM sampling has the drought reached as low as an SPI value as -1.3, which is most evident over a 24 month analysis time period (Fig. 1 panel 3). ** <- that looks wrong, should actually check
 
-```{r Line Plots SPEI of UFO area}
+```{r import data for Line Plots SPEI of UFO area}
 fp <- '../data/processed/SPEI'
 
 v6  <- drought_prep(path = fp, start_layer = 25, set =  '6')
@@ -419,7 +409,29 @@ v24 <- drought_prep(path = fp, start_layer = 25, set = '24')
 
 drought_mean_vals <- bind_rows(v6, v12, v24) %>% 
   mutate(period = factor(period, levels = c('months_6', 'months_12', 'months_24')))
-  
+
+```
+
+
+
+```{r Compare our SPEI values to those from the Official group, eval = F}
+
+spei_path <- '../data/raw/SPEI_coarse'
+f <- rast(file.path(spei_path,  (list.files(file.path(spei_path)))))
+f <- f[[961:dim(f)[3]]]
+
+
+template <- rast('../data/processed/SPEI/SPEI_months_12.tif')
+border63 <- ext(project(rast('../data/raw/UFO_slope_deg.tif'), crs(f)))
+f <- crop(f, border63)
+f <- resample(f, template)
+
+
+rm(border63)
+```
+
+
+```{r create Line Plots SPEI of UFO area, eval = F}
 p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
   
   geom_rect(aes(xmin = 2018, xmax = 2022, ymin = -Inf, ymax = Inf, fill = "Sampling Period"), color = 'NA') +
@@ -457,7 +469,7 @@ p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
 ```
 
 
-```{r Fit a GLS model to m12 data and plot it}
+```{r Fit a GLS model to m12 data }
 m12 <- drought_mean_vals %>% 
   filter(period == 'months_12') %>% 
   rowid_to_column('time') %>% 
@@ -488,6 +500,9 @@ lm12.ac <- nlme::gls(SPEI ~ time, data = m12, correlation = nlme::corAR1(form = 
 conf.int <- nlme::intervals(lm12.ac)
 m12$predlm = predict(lm12.ac)
 cs <- as.data.frame(summary(lm12.ac)$tTable)
+```
+
+```{r plot GLS model, eval = F}
 
 p2 <- ggplot(m12, aes(x = Date, y = SPEI)) +
   
@@ -529,7 +544,7 @@ ggsave('SPEI_UFO_AREA.png', plot = p, device = 'png', path = '../results' ,
        scale = 1, width = 3.5, height = 3.5, dpi = 300, 
        units = "in")
 
-rm(p, p1, p2, legend, v6, v12, v24, combined_plot)
+rm(p, p1, p2, legend, v6, v12, v24, combined_plot, pr, prvals)
 ```
 
 
@@ -537,14 +552,16 @@ rm(p, p1, p2, legend, v6, v12, v24, combined_plot)
 knitr::include_graphics('../results/SPEI_UFO_AREA.png')
 ```
 
-
 Using the SPEI values from the 12 month calculations evidence of a negative association between year and SPEI over the period of analysis (`r m12$Date[1]` - `r m12$Date[nrow(m12)]`, p = `r toString(round(cs$p[2], 3))`) was found after accounting for the temporal correlation present in the errors of the linear regression model relating the two variables (model call to R: *`r toString(lm12.ac[["call"]])`*). Each 1-unit increase in the values of time (in this case, month) was associated with a decrease in the expected value of SPEI of `r toString(round(lm12.ac[["coefficients"]][["time"]], 4))` units (95% CI: `r toString(round(conf.int$coef[2], 3))` to `r round(conf.int$coef[6], 3)`). In other words, this model indicates that, on average, the area of analysis has become drier. This model has several limitations, which we will not address here, and advocate that it simply be used in a semi-quantitative fashion to indicate that a negative trend in SPEI values is evident.
 
 ```{r}
 rm(m12, cs, lm12.ac, conf.int)
 ```
 
-```{r SPI Values Interpretation, fig.align = 'right'}
+
+While a year, 2019, where moisture exceeded evaporation occurred during the sampling for both 6 and 12 month windows, due to its 24 month period of moisture deficit we not consider it a year which may serve as an example of non-drought status in the time period. 
+
+```{r SPI Values Interpretation}
 
 data.frame(
   Value = c(
@@ -554,7 +571,6 @@ data.frame(
     'Near Normal','Abnormally Dry', 'Moderate Drought',
     'Severe Drought', 'Extreme Drought', 'Exceptional Drought')) %>% 
   knitr::kable(align = c('c','c'), caption = "SPI Values Interpretation") %>% 
-  kableExtra::kable_styling(position = "right") %>% 
   kableExtra::add_footnote('From a presentation by Brian Fuchs of the National Drought Mitigation Center and University of Nebraska-Lincoln.')
 ```
 
@@ -616,14 +632,13 @@ rm(fp, files, m6early, m6late, m12early, m12late, m24early, m24late)
 ```
 
 
-
 \newpage
 
-The drought conditions were variable across not only time, as exemplified in Figure 1, but also to some extent in space, as shown in Figure 2. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. While many plants have physical adaptions for existence in areas with low amounts of precipitation, this balance is still required in order for the perpetuity of healthy vegetation communities (), and even this vegetation may only survive under drought conditions for limited periods of time. 
+The drought conditions were variable across not only time, as exemplified in Figure 2, but also to some extent in space, as shown in Figure 3. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. While many plants have physical adaptions for existence in areas with low amounts of precipitation, this balance is still required in order for the perpetuity of healthy vegetation communities, and even this vegetation may only survive under drought conditions for limited periods of time. 
 
 Drought is a multiscalar phenomena, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
 
-In the area of analysis, all duration of drought appear to be more severe in lower elevation areas.  
+In the area of analysis, all duration of drought appear to be slightly more severe in lower elevation areas. However, all areas of the analysis were severely affected by the drought and the process can be considered nearly constant across the analyzed extent.   
 
 ```{r Drought Maps, echo=FALSE, fig.cap="Maps comparing the historic mean SPEI values (left), and the current values (right)", out.width = '40%'}
 knitr::include_graphics("../results/drought_6_panels.png")
@@ -700,8 +715,17 @@ A Land Health Assessment for a parcel of BLM land which was conducted in 2022, i
 >  
 > `r tufte::quote_footer('--- BLM 2022')`
 
+# Summary
 
+The area around, and which constitutes, the UFO has been in drought since the initiation of the AIM sample design. For these reasons we do not analyze each panel, which is intended to represent a year, separately. We also expect that the drought will have considerable effects on the following core indicator variables in particular:
 
+- Percent cover of Annual Forbs/Grasses (decreased due to lessened plant growth)
+- Percent cover of Bareground (increased due to lessened plant growth)
+- Vegetative height of herbaceous cover (decreased due to lessened plant growth)
+- Herbaceous litter (decreased due to lessened plant growth)
+- Decedent (dead) plant cover (increased due to mortality of limbs)
+
+In closing, in defining a SPI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a serious drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a serious, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
 
 \newpage
 
