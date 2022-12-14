@@ -780,7 +780,7 @@ The area around, and which constitutes, the UFO has been in drought since the in
 - Herbaceous litter (decreased due to lessened plant growth)
 - Decedent (dead) plant cover (increased due to mortality of limbs)
 
-In closing, in defining a SPI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a serious drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a serious, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
+In closing, in defining a SPI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a severe drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a severe, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
 
 \newpage
 
