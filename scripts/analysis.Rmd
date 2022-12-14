@@ -1,6 +1,6 @@
 ---
-title: "Climate"
-author: "steppe"
+title: "Drought"
+author: 
 output:
   pdf_document: default
   word_document: default
@@ -253,6 +253,7 @@ writeRaster(dem, '../data/raw/dem.tif', overwrite = T)
 rm(dpath, dem, template)
 ```
 
+\newpage
 
 __Variables to calculate Potential Evaporation via the Penman-Montieth equation__
 
@@ -471,7 +472,6 @@ ggplot(drought_corr, aes(x = Date, y = SPEI, color = dataset)) +
   labs(title = "Comparison of SPEI values calculated from different inputs",
     x = 'Year', y = "SPEI") 
 
-
 #dc <- drought_corr %>% 
 #  filter(dataset == 'derived' & period == 'months_6')  %>% 
 #  mutate(month = str_replace(month, 'SEP', 'SEPT'),
@@ -525,7 +525,7 @@ p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
 ```
 
 
-```{r Fit a GLS model to m12 data }
+```{r Fit a GLS model to m12 data}
 m12 <- drought_mean_vals %>% 
   filter(period == 'months_12') %>% 
   rowid_to_column('time') %>% 
@@ -546,13 +546,13 @@ lm12.ac <- nlme::gls(SPEI ~ time, data = m12, correlation = nlme::corAR1(form = 
               na.action=na.omit)
 
 #forecast::auto.arima(residuals(lm12, start.P = 1))
-#lm12.ac.2 <- update(lm12.ac, correlation=nlme::corARMA(p=1))
+lm12.ac.2 <- update(lm12.ac, correlation=nlme::corARMA(p=1))
 #anova(lm12, lm12_2, lm12.ac, lm12.ac.2)
-summary(lm12.ac)
-plot(fitted(lm12.ac),residuals(lm12.ac))
-abline(h=0,lty=3)
-qqnorm(lm12.ac)
-hist(residuals(lm12.ac))
+# summary(lm12.ac)
+# plot(fitted(lm12.ac),residuals(lm12.ac))
+# abline(h=0,lty=3)
+# qqnorm(lm12.ac)
+# hist(residuals(lm12.ac))
 conf.int <- nlme::intervals(lm12.ac)
 m12$predlm = predict(lm12.ac)
 cs <- as.data.frame(summary(lm12.ac)$tTable)
@@ -701,7 +701,6 @@ knitr::include_graphics("../results/drought_6_panels.png")
 ```
 
 ```{r Model drought as the average of multitemporal settings, eval = F}
-
 
 # Perhaps we can create an ensemble GAM to indicate drought across these time scales?
 library(mgcv)
