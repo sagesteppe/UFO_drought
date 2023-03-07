@@ -158,11 +158,11 @@ rm(pancake, dmonths, sh_p, files, mean_rasters)
 
 ```{r Download climate vars from gridmet and subset, eval = F}
 
-p <- '/media/reed/ExternalHD/drought_geospatial/Gridmet'
-Get_Gridmet(product_type = "pr", start_year = 1979, end_year = 2021, destination = p)
+p <- '../../drought_geospatial/Gridmet'
+Get_Gridmet(product_type = "pr",   start_year = 1979, end_year = 2021, destination = p)
 Get_Gridmet(product_type = "tmmx", start_year = 1979, end_year = 2021, destination = p)
 Get_Gridmet(product_type = "tmmn", start_year = 1979, end_year = 2021, destination = p)
-Get_Gridmet(product_type = "vs", start_year = 1979, end_year = 2021, destination = p)
+Get_Gridmet(product_type = "vs",   start_year = 1979, end_year = 2021, destination = p)
 Get_Gridmet(product_type = "rmax", start_year = 1979, end_year = 2021, destination = p)
 Get_Gridmet(product_type = "rmin", start_year = 1979, end_year = 2021, destination = p)
 p <- file.path(p, 'Gridmet')
@@ -173,8 +173,8 @@ All climate variables, aside from cloud cover, were downloaded from gridMet usin
 
 ```{r reduce gridmet climate vars to monthly means, eval = F}
 # now reduce the size of these data by making the monthly means
-root_p <- '/media/reed/ExternalHD/drought_geospatial/Gridmet'
-out_p <- '/media/reed/ExternalHD/drought_geospatial/monthly_gridmet'
+root_p <- '../../drought_geospatial/Gridmet'
+out_p <- '../../drought_geospatial/monthly_gridmet'
 crop_p <- '../data/raw/UFO_slope_deg.tif'
 
 gridSTATS(inpath = root_p , FUN = mean,  outpath = out_p, cropRast = crop_p, variable = 'vs')
@@ -202,17 +202,44 @@ rm(root_p, out_p, crop_p, gridSTATS)
 border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
 ```
 
+```{r Download precipitation data from PRISM}
+
+library(prism)
+
+# There are noted issues with the climate station in Delta, Delta County. 
+# They stem in part from the movement of it in the late 90's, and a data
+# error which has not been purged by NOAA, despite multiple requests. 
+# Different climate algorithms deal with this differently, and supposedly
+# PRISM minimizes the errors associated with using these data more than
+# gridmet
+
+crop_p <- '../data/raw/UFO_slope_deg.tif'
+prism_path <- '../../drought_geospatial/PRISM_ppt'
+prism_set_dl_dir(prism_path, create = TRUE)
+# get_prism_monthlys(type = "ppt", years = 1979:2021, mon = 1:12, keepZip = FALSE)
+
+files <- file.path(prism_path,
+  list.files(prism_path, recursive = T, pattern = '_bil.bil$') )
+
+rast(file.path(prism_path, files))
+
+
+gridSTATS(inpath = root_p , FUN = mean,  outpath = out_p, cropRast = crop_p, variable = 'vs')
+
+```
+
+
 Cloud Cover data were downloaded from EarthENV, from the study of Wilson (2016), and were transformed back into percentages by multiplying $x * 0.01$, raster data are often transmitted with alterations of decimal points to reduce the file size. 
 
 ```{r Crop Cloud data, eval = F}
 
-cpath <- '/media/reed/ExternalHD/drought_geospatial/cloud'
+cpath <- '../../drought_geospatial/cloud'
 cfiles <- file.path(cpath, list.files(cpath, pattern = "tif$"))
 clouds <- rast(cfiles)
 
 border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(clouds))
 clouds <- crop(clouds, border)
-template <- rast('/media/reed/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
+template <- rast('../../drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
 clouds <- aggregate(clouds, fact =4)
 clouds <- resample(clouds, template, method  = 'cubic')
 names(clouds) <- unique(dmonths_normal)
@@ -227,7 +254,7 @@ rm(cpath, clouds, border, cfiles)
 
 
 ```{r subtract clouds from sun hours, eval = F}
-SunHours <- rast('/media/reed/ExternalHD/UFO_drought/data/raw/MeanSunHours.tif')
+SunHours <- rast('../../UFO_drought/data/raw/MeanSunHours.tif')
 SunHours <- resample(SunHours, template, method  = 'cubic')
 SunHours <- SunHours[[unique(dmonths_normal)]]
 SunHours <- project(SunHours, crs(template))
@@ -255,13 +282,13 @@ The digital elevation model (DEM), which was utilized in the calculation of suns
 
 ```{r Crop DEM, eval = F}
 
-dpath <- '/media/reed/ExternalHD/drought_geospatial/dem'
+dpath <- '../../drought_geospatial/dem'
 dem <- rast(file.path(dpath, list.files(dpath, pattern = "bil$", recursive = T)))
 
 border <- project(rast('../data/raw/UFO_slope_deg.tif'), crs(dem))
 dem <- crop(dem, border)
 
-template <- rast('/media/reed/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
+template <- rast('../../drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
 dem <- resample(dem, template, method  = 'cubic')
 dem <- exactextractr::exact_resample(dem, template, "mean")
 
@@ -278,8 +305,8 @@ focal_window <- 9
 ```
 
 ```{r Calculate SPEI, eval = F}
-out_p <- '/media/reed/ExternalHD/drought_geospatial/monthly_gridmet'
-template <- rast('/media/reed/ExternalHD/drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
+out_p <- '../../drought_geospatial/monthly_gridmet'
+template <- rast('../../drought_geospatial/monthly_gridmet/vs/vs_1979.tif')[[1]]
 
 cloudCover <- rast('../data/raw/clouds.tif')
 sunHours <- rast('../data/raw/MeanSunHours.tif')
@@ -389,7 +416,7 @@ We subset the drought data so that the beginning period for all temporal extents
 dem <- rast('../data/raw/dem.tif')
 demvals <- round(values(range(dem)), 0)
 
-inp <- '/media/sagesteppe/ExternalHD/drought_geospatial/monthly_gridmet'
+inp <- '../../drought_geospatial/monthly_gridmet'
 pr <- rast(file.path(inp, 'pr', (list.files(file.path(inp, 'pr')))))  # this is range of 
 pr <- sum(pr)/43
 prvals <- values(range(pr)) * 0.0393701
@@ -696,7 +723,7 @@ The drought conditions were variable across not only time, as exemplified in Fig
 
 Drought is a multiscalar phenomena, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
 
-**In the area of analysis, all duration of drought appear to be slightly more severe in lower elevation areas. However, all areas of the analysis were severely affected by the drought and the process can be considered nearly constant across the analyzed extent.** <- RUN THIS ANALYSIS ON ONLY BLM LAND FOR CONSISTENCY WITH REMAINDER OF REPORT
+In the area of analysis, all duration of drought appear to be slightly more severe in lower elevation areas. However, all areas of the analysis were severely affected by the drought and the process can be considered nearly constant across the analyzed extent.
 
 ```{r Model drought as the average of multitemporal settings, eval = F}
 
