@@ -257,7 +257,7 @@ drought_prep <- function(path, start_layer, set){
 
   if(missing(start_layer)){start_layer = 1}
   
-  files <- file.path(path, list.files(path, pattern = set))
+  files <- file.path(path, list.files(path, pattern = paste0(set, '*.', 'tif$')))
   period_vals <- terra::values(terra::rast(files))
   period_vals <- period_vals[,start_layer:ncol(period_vals)]
   period_vals <- apply(period_vals, MARGIN = 2, mean, na.rm = T)

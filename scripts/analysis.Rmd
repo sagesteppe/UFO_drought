@@ -14,10 +14,9 @@ link-citations: yes
 
 \vspace{-1cm}
 
-## Background 
-The AIM sample design is split into five panels, one for each year, with the intention that temporal analyses can be conducted across the panels (*see X.X for more info*). Ideally, these panels will reflect consistent natural climatic variation. In others words, some years will be drier while other years will be wetter, and the differences they have on the attributes measured by AIM can be considered. However, we felt, and our constant monitoring of the University of Nebraska-Lincolns Drought Monitor over this period, supported the notion that we sampled during a period of immense drought. In fact, the sampling was concluded during a period of drought shown to be the most severe across Western North America since the year 800 A.D. (@williams2022rapid). Here we contextualize our sampling period within the known climatic variation in the field office, and discuss why we dismiss calculating AIM metrics separately for each year. 
+The AIM *sample design* contains five panels, one for each year, with the intention that temporal analyses can be conducted across the panels. Ideally, these panels will reflect consistent natural climatic variation. In others words, some years will be drier while other years will be wetter, and the differences these conditions have on the attributes measured by AIM can be consideredin conclusions. However, we felt, and our constant monitoring of the University of Nebraska-Lincolns Drought Monitor over this period, supported the notion that we sampled during a period of immense drought. In fact, the sampling was concluded during a period of drought shown to be the most severe across Western North America since the year 800 A.D. (@williams2022rapid). Here we contextualize our sampling period within the known climatic variation in the field office, and discuss why we dismiss calculating AIM metrics separately for each year. 
 
-Contrary to the concept of Agricultural drought, the exploration and understanding of Ecological drought is nascent and not as well defined (@crausbay2017defining, @slette2019ecologists). In fact, numerous recent papers published in *peer-reviewed journals* have sought to both define this term, and formulate it in a way which it may be applied to the management of natural resources. A recent example of the term is:
+Contrary to the concept of Agricultural drought, the exploration and understanding of Ecological drought is nascent and not well defined (@crausbay2017defining, @slette2019ecologists). In fact, numerous recent papers published in *peer-reviewed journals* have sought to both define this term, and formulate it in a way which it may be applied to the management of natural resources. A recent example of the term is:
 
 > "_**ecological drought** ... an episodic deficit in water availability that drives ecosystems beyond thresholds of vulnerability, impacts ecosystem services, and triggers feedbacks in natural and/or human systems_" 
 >
@@ -45,7 +44,7 @@ library(terra)
 source('functions.R')
 ```
 
-## Methods: 
+## Methods
 
 Calculations of metrics which measure drought essentially reflect the relationship of 1) the amount of moisture entering an area, 2) and the amount of moisture leaving that area, and how 3) these values are balanced. When more moisture enters an area than leaves it, the moisture balance will be positive, when the moisture balance is negative for an extended period of time the area will in drought. Hence all equations for measuring drought may be conceptually simplified to
 $$1_{MoistureIn} - 2_{MoistureOut} = 3_{Balance}$$ 
@@ -202,7 +201,7 @@ rm(root_p, out_p, crop_p, gridSTATS)
 border <- ext(rast('../data/raw/UFO_slope_deg.tif'))
 ```
 
-```{r Download precipitation data from PRISM}
+```{r Download precipitation data from PRISM, eval = F}
 
 library(prism)
 
@@ -213,21 +212,25 @@ library(prism)
 # PRISM minimizes the errors associated with using these data more than
 # gridmet
 
-crop_p <- '../data/raw/UFO_slope_deg.tif'
+slope <- rast('../data/raw/UFO_slope_deg.tif')
 prism_path <- '../../drought_geospatial/PRISM_ppt'
 prism_set_dl_dir(prism_path, create = TRUE)
-# get_prism_monthlys(type = "ppt", years = 1979:2021, mon = 1:12, keepZip = FALSE)
+get_prism_monthlys(type = "ppt", years = 1979:2021, mon = 1:12, keepZip = FALSE)
 
 files <- file.path(prism_path,
-  list.files(prism_path, recursive = T, pattern = '_bil.bil$') )
+                   list.files(prism_path, recursive = T, pattern = '_bil.bil$') )
 
-rast(file.path(prism_path, files))
+prism_ppt <- rast(file.path(prism_path, files))
+slope <- project(slope, crs(prism_ppt))
+prism_ppt <- crop(prism_ppt, slope)
+dir.create(paste0(prism_path, '_cropped'))
 
+writeRaster(prism_ppt, 
+            file.path( paste0(prism_path, '_cropped'), 'Prism_ppt_cropped.tif'), 
+)
 
-gridSTATS(inpath = root_p , FUN = mean,  outpath = out_p, cropRast = crop_p, variable = 'vs')
-
+rm(slope, prism_path, prism_ppt)
 ```
-
 
 Cloud Cover data were downloaded from EarthENV, from the study of Wilson (2016), and were transformed back into percentages by multiplying $x * 0.01$, raster data are often transmitted with alterations of decimal points to reduce the file size. 
 
@@ -410,7 +413,7 @@ rm(syear, eyear, focal_window, myscales)
 
 We subset the drought data so that the beginning period for all temporal extents has the same start date, January 1981. It is recommended to have 30 years of climate data to compare local conditions to. We will span the years from 1981-2015 as our `r 2015-1981` year background data. This will also allow a slight degree of buffering between our data sets, so that the starting times between our two datasets, the occurrence of drought during the AIM sampling, and the historic climate variables are not temporally replicated. 
 
-# Results 
+## Results & Discussion
 
 ```{r some geographic area settings}
 dem <- rast('../data/raw/dem.tif')
@@ -439,7 +442,7 @@ The area of analysis which surrounds the UFO spans XX miles North to South, and 
     \caption{SPI Values Interpretation; B. Fuchs}
 \end{wraptable}
 
-The UFO has oscillated between drought status and times of excessive moisture (*see figure 2*). The historic values of this would define the natural climatic oscillations which the AIM panel design was intended to capture. For example the 1980's represent a relatively moist period in the history of the UFO, followed by a short drought around 1990. However, as can be inferred from the trend line in (*see Fig. 1 panel 4*), the average SPEI has decreased over time from the beginning of the calculated times to today. **However, at no time prior to the initiation of AIM sampling has the drought reached as low as an SPI value as -1.3, which is most evident over a 24 month analysis time period (Fig. 1 panel 3). ** <- that looks wrong, should actually check
+The UFO has oscillated between drought status and times of excessive moisture (*see figure 2*). The historic values of this would define the natural climatic oscillations which the AIM panel design was intended to capture. For example the 1980's represent a relatively moist period in the history of the UFO, followed by a short drought around 1990. However, as can be inferred from the trend line in (*see Fig. 1 panel 4*), the average SPEI has decreased over time from the beginning of the calculated times to today. However, at no time prior to the initiation of AIM sampling has the drought reached as low as an SPI value as -1.3, which is most evident over a 24 month analysis time period (Fig. 1 panel 3). 
 
 ```{r import data for Line Plots SPEI of UFO area}
 fp <- '../data/processed/SPEI'
@@ -454,7 +457,7 @@ drought_mean_vals <- bind_rows(v6, v12, v24) %>%
 rm(v6, v12, v24)
 ```
 
-The correlation between the values for SPEI which were calculated locally were compared to those calculated by the XXX group. SPEI calculated for the same three durations were downloaded from the WEBSITE on (Nov., 30th from 10-11 A.M. RMT). These data were cropped and resampled into the same resolution as the local dataset using bilinear interpolation. 
+The correlation between the values for SPEI which were calculated locally were compared to those calculated by the Consejo Superior de Investigaciones Cientficas group. SPEI calculated for the same three durations were downloaded from the spei website (https://spei.csic.es) on (Nov., 30th from 10-11 A.M. RMT). These data were cropped and resampled into the same resolution as the local data set using bilinear interpolation. 
 
 ```{r Compare our SPEI values to those from the Official group - Process, eval = F}
 
@@ -566,6 +569,7 @@ p1 <- ggplot(drought_mean_vals, aes(x = Date, y = SPEI)) +
 
 
 ```{r Fit a GLS model to m12 data}
+
 m12 <- drought_mean_vals %>% 
   filter(period == 'months_12') %>% 
   rowid_to_column('time') %>% 
@@ -573,6 +577,7 @@ m12 <- drought_mean_vals %>%
          month = factor(month, levels = unique(dmonths_normal)),
          year = as.numeric(year))
 
+m12 <- m12[complete.cases(m12),]
 # minimal model does SPEI follow a trend with time?
 #m12_nd <- select(m12, -Date)
 #lm12 <- nlme::gls(SPEI ~ time, data = m12_nd)
@@ -644,21 +649,21 @@ rm(p, p1, p2, legend, combined_plot, pr, prvals)
 ```
 
 
-\begin{wrapfigure}{r}{0.35\textwidth}
-  \centering
-    \includegraphics[width=0.35\textwidth]{../results/SPEI_UFO_AREA.png}
-  \caption{Mean Drought Status of the UFO area over time. Area is pink denotes the period of time which the AIM survey was conducted. Under each measurement window it generally has a negative value of SPEI.}
-\end{wrapfigure}
-
-Using the SPEI values from the 12 month calculations evidence of a negative association between year and SPEI over the period of analysis (`r m12$Date[1]` - `r m12$Date[nrow(m12)]`, p = `r toString(round(cs$p[2], 3))`) was found after accounting for the temporal correlation present in the errors of the linear regression model relating the two variables (model call to R: *`r toString(lm12.ac[["call"]])`*). Each 1-unit increase in the values of time (in this case, month) was associated with a decrease in the expected value of SPEI of `r toString(round(lm12.ac[["coefficients"]][["time"]], 4))` units (95% CI: `r toString(round(conf.int$coef[2], 3))` to `r round(conf.int$coef[6], 3)`). In other words, this model indicates that, on average, the area of analysis has become drier. This model has several limitations, which we will not address here, and advocate that it simply be used in a semi-quantitative fashion to indicate that a negative trend in SPEI values is evident.
+Using the SPEI values from the 12 month calculations evidence of a negative association between year and SPEI over the period of analysis (`r m12$Date[1]` - `r m12$Date[nrow(m12)]`, p = `r toString(round(cs$p[2], 3))`) was found after accounting for the temporal correlation present in the errors of the linear regression model relating the two variables (model call to R: *`r toString(lm12.ac[["call"]])`*). Each 1-unit increase in the values of time (in this case, month) was associated with a decrease in the expected value of SPEI of `r toString(round(lm12.ac[["coefficients"]][["time"]], 5))` units (95% CI: `r toString(round(conf.int$coef[2], 5))` to `r round(conf.int$coef[6], 5)`). In other words, this model indicates that, on average, the area of analysis has become drier. This model has several limitations, which we will not address here, and advocate that it simply be used in a semi-quantitative fashion to indicate that a negative trend in SPEI values is evident.
 
 ```{r}
 rm(m12, cs, lm12.ac, conf.int)
 ```
 
+\begin{wrapfigure}{r}{0.3\textwidth}
+  \centering
+    \includegraphics[width=0.3\textwidth]{../results/SPEI_UFO_AREA.png}
+  \caption{Mean Drought Status of the UFO area over time. Area is pink denotes the period of time which the AIM survey was conducted. Under each measurement window it generally has a negative value of SPEI.}
+\end{wrapfigure}
+
 While a year, 2019, where moisture exceeded evaporation occurred during the sampling for both 6 and 12 month windows, due to its 24 month period of moisture deficit we not consider it a year which may serve as an example of non-drought status in the time period. 
 
-```{r Drought map,fig.cap = "Figure 2. Drought Maps. The left panels show that the area exists in a moisture balance at all time scales considered. Panels at right show that the area varies in the extent to which drought affects the spatial extent of the area. The panel at bottom is a stylized topographic map to provide reference to the area of drought analysis.", warning = F, eval = F}
+```{r Drought map,fig.cap = "Figure 2. Drought Maps. The left panels show that the area exists in a moisture balance at all time scales considered. Panels at right show that the area varies in the extent to which drought affects the spatial extent of the area.", warning = F, eval = F}
 
 library(RColorBrewer)
 
@@ -712,16 +717,15 @@ ggsave(plot = drought_map, device = "png", filename = 'drought_6_panels.png',
 rm(fp, files, m6early, m6late, m12early, m12late, m24early, m24late)
 ```
 
-
 The drought conditions were variable across not only time, as exemplified in Figure 2, but also to some extent in space, as shown in Figure 3. As would be expected the area experiences a SPEI value around 0 over longer periods of time, this being a result of a long term water balance. While many plants have physical adaptions for existence in areas with low amounts of precipitation, this balance is still required in order for the perpetuity of healthy vegetation communities, and even this vegetation may only survive under drought conditions for limited periods of time. 
 
-\begin{wrapfigure}{l}{0.35\textwidth}
+\begin{wrapfigure}{l}{0.3\textwidth}
   \centering
-    \includegraphics[width=0.35\textwidth]{../results/drought_6_panels.png}
+    \includegraphics[width=0.3\textwidth]{../results/drought_6_panels.png}
   \caption{Maps comparing the historic mean SPEI values (left), and the current values (right)}
 \end{wrapfigure}
 
-Drought is a multiscalar phenomena, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the last six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading uo to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
+Drought is a multiscalar phenomena, and what it effects varies as a function of time. In a hypothetical example, shorter periods of drought, such as those of the six months leading up to a point in time, may only adversely impact the amount of reproductive output of a plant rather than it's growth. Whereas longer periods of drought, such as the last two years leading up to a point in time, may affect not only the reproductive output of a plant, but even it's own survival. 
 
 In the area of analysis, all duration of drought appear to be slightly more severe in lower elevation areas. However, all areas of the analysis were severely affected by the drought and the process can be considered nearly constant across the analyzed extent.
 
@@ -795,7 +799,7 @@ A Land Health Assessment for a parcel of BLM land which was conducted in 2022, i
 >  
 > `r tufte::quote_footer('--- BLM 2022')`
 
-# Summary
+## Summary
 
 The area around, and which constitutes, the UFO has been in drought since the initiation of the AIM sample design. For these reasons we do not analyze each panel, which is intended to represent a year, separately. We also expect that the drought will have considerable effects on the following core indicator variables in particular:
 
@@ -805,9 +809,9 @@ The area around, and which constitutes, the UFO has been in drought since the in
 - Herbaceous litter (decreased due to lessened plant growth)
 - Decedent (dead) plant cover (increased due to mortality of limbs)
 
-In closing, in defining a SPI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a severe drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a severe, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
-
-\newpage
+In closing, in defining a SPEI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a severe drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a severe, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
 
 # References
+
+\small
 
