@@ -12,9 +12,10 @@ bibliography: ../citations/citations/citations.bib
 link-citations: yes
 ---
 
+\pagenumbering{gobble}
 \vspace{-1cm}
 
-The AIM *sample design* contains five panels, one for each year, with the intention that temporal analyses can be conducted across the panels. Ideally, these panels will reflect consistent natural climatic variation. In others words, some years will be drier while other years will be wetter, and the differences these conditions have on the attributes measured by AIM can be consideredin conclusions. However, we felt, and our constant monitoring of the University of Nebraska-Lincolns Drought Monitor over this period, supported the notion that we sampled during a period of immense drought. In fact, the sampling was concluded during a period of drought shown to be the most severe across Western North America since the year 800 A.D. (@williams2022rapid). Here we contextualize our sampling period within the known climatic variation in the field office, and discuss why we dismiss calculating AIM metrics separately for each year. 
+The AIM *sample design* contains five panels, one for each year, with the intention that temporal analyses can be conducted across the panels. Ideally, these panels will reflect consistent natural climatic variation. In others words, some years will be drier while other years will be wetter, but over the period the climate conditions will be average. Then the effects on sampling year can be considered when interpreting the results of analyses. However, we felt, and our constant monitoring of the University of Nebraska-Lincolns Drought Monitor over this period, supported the notion that we sampled during a period of immense drought. In fact, the sampling was concluded during a period of drought shown to be the most severe across Western North America since the year 800 A.D. (@williams2022rapid). Here we contextualize our sampling period within the known climatic variation in the field office, and discuss why we dismiss calculating AIM metrics separately for each year. 
 
 Contrary to the concept of Agricultural drought, the exploration and understanding of Ecological drought is nascent and not well defined (@crausbay2017defining, @slette2019ecologists). In fact, numerous recent papers published in *peer-reviewed journals* have sought to both define this term, and formulate it in a way which it may be applied to the management of natural resources. A recent example of the term is:
 
@@ -427,7 +428,7 @@ prvals <- values(range(pr)) * 0.0393701
 rm(dem, pr, inp)
 ```
 
-The area of analysis which surrounds the UFO spans XX miles North to South, and XX miles East to West. This area varies in elevation from `r toString(round(min(demvals) * 3.28, -2))` feet (`r round(min(demvals), -1)` m) in the red-rock deserts of the Colorado Plateau Western portion of the extent to over 14,000 feet (4265 + m) in the Alpine peaks in the SE of the extent (the Nucla and Telluride areas, respectively, *see figure 1*) . The mean annual amount of precipitation varies in these areas from a low of `r toString(round(min(prvals), 0))` inches (`r toString(round(min(prvals) * 2.54, 0))` cm) to `r toString(round(max(prvals), 0))` inches (`r toString(round(max(prvals)* 2.54, 0))` cm). In all areas of analysis precipitation arrives at two time periods. Large amounts of precipitation arrive in winter in the form of snow, which historically has melted slowly in spring making major contributions to soil moisture. In the afternoons of mid-summer days precipitation arrives in the form Monsoons.
+The area of analysis varies in elevation from `r toString(round(min(demvals) * 3.28, -2))` feet (`r round(min(demvals), -1)` m) in the red-rock deserts of the Colorado Plateau Western portion of the extent to over 14,000 feet (4265 + m) in the Alpine peaks in the SE of the extent (the Nucla and Telluride areas, respectively, *see figure 1*) . The mean annual amount of precipitation varies in these areas from a low of `r toString(round(min(prvals), 0))` inches (`r toString(round(min(prvals) * 2.54, 0))` cm) to `r toString(round(max(prvals), 0))` inches (`r toString(round(max(prvals)* 2.54, 0))` cm). In all areas of analysis precipitation arrives at two time periods. Large amounts of precipitation arrive in winter in the form of snow, which historically has melted slowly in spring making major contributions to soil moisture. In the afternoons of mid-summer days precipitation arrives in the form Monsoons.
 
 \begin{wraptable}{r}{50mm}
     \begin{tabular}{c | c}
@@ -648,7 +649,6 @@ ggsave('SPEI_UFO_AREA.png', plot = p, device = 'png', path = '../results' ,
 rm(p, p1, p2, legend, combined_plot, pr, prvals)
 ```
 
-
 Using the SPEI values from the 12 month calculations evidence of a negative association between year and SPEI over the period of analysis (`r m12$Date[1]` - `r m12$Date[nrow(m12)]`, p = `r toString(round(cs$p[2], 3))`) was found after accounting for the temporal correlation present in the errors of the linear regression model relating the two variables (model call to R: *`r toString(lm12.ac[["call"]])`*). Each 1-unit increase in the values of time (in this case, month) was associated with a decrease in the expected value of SPEI of `r toString(round(lm12.ac[["coefficients"]][["time"]], 5))` units (95% CI: `r toString(round(conf.int$coef[2], 5))` to `r round(conf.int$coef[6], 5)`). In other words, this model indicates that, on average, the area of analysis has become drier. This model has several limitations, which we will not address here, and advocate that it simply be used in a semi-quantitative fashion to indicate that a negative trend in SPEI values is evident.
 
 ```{r}
@@ -811,7 +811,7 @@ The area around, and which constitutes, the UFO has been in drought since the in
 
 In closing, in defining a SPEI value which captures the effects of drought in our study area, we feel that SPEI values < - 1.3, for a duration of 12 months via the calculation capture a severe drought event. However, we feel that values of < - 0.9 for 6 months periods are likewise a severe, rather than moderate, drought event, which may escalate to serious wildfire hazards.  
 
-# References
+## References
 
 \small
 
